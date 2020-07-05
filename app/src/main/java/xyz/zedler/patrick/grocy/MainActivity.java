@@ -344,7 +344,7 @@ public class MainActivity extends AppCompatActivity {
         switch (uiMode) {
             case Constants.UI.STOCK_DEFAULT:
             case Constants.UI.STOCK_SEARCH:
-                scrollBehavior.setUpScroll(R.id.scroll_stock);
+                scrollBehavior.setUpScroll(R.id.recycler_stock);
                 scrollBehavior.setHideOnScroll(true);
                 updateBottomAppBar(
                         Constants.FAB.POSITION.CENTER, R.menu.menu_stock, animated, () -> {

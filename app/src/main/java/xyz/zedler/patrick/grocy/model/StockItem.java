@@ -26,7 +26,9 @@ import androidx.annotation.NonNull;
 
 import com.google.gson.annotations.SerializedName;
 
-public class StockItem implements Parcelable {
+import java.util.Objects;
+
+public class StockItem extends GroupedListItem implements Parcelable {
 
     @SerializedName("amount")
     private String amount;
@@ -51,6 +53,10 @@ public class StockItem implements Parcelable {
 
     @SerializedName("product")
     private Product product;
+
+    public StockItem(int productId) {
+        this.productId = productId;
+    }
 
     public StockItem(ProductDetails productDetails) {
         this.amount = String.valueOf(productDetails.getStockAmount());
@@ -152,9 +158,43 @@ public class StockItem implements Parcelable {
         return 0;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        StockItem stockItem = (StockItem) o;
+        return isAggregatedAmount == stockItem.isAggregatedAmount &&
+                productId == stockItem.productId &&
+                Objects.equals(amount, stockItem.amount) &&
+                Objects.equals(amountAggregated, stockItem.amountAggregated) &&
+                Objects.equals(bestBeforeDate, stockItem.bestBeforeDate) &&
+                Objects.equals(amountOpened, stockItem.amountOpened) &&
+                Objects.equals(amountOpenedAggregated, stockItem.amountOpenedAggregated) &&
+                Objects.equals(product, stockItem.product);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                amount,
+                amountAggregated,
+                bestBeforeDate,
+                amountOpened,
+                amountOpenedAggregated,
+                isAggregatedAmount,
+                productId,
+                product
+        );
+    }
+
     @NonNull
     @Override
     public String toString() {
         return "StockItem(" + product + ")";
+    }
+
+    @Override
+    public int getType() {
+        return GroupedListItem.TYPE_ENTRY;
     }
 }

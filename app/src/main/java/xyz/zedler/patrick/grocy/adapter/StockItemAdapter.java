@@ -30,30 +30,36 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import xyz.zedler.patrick.grocy.R;
+import xyz.zedler.patrick.grocy.model.GroupedListItem;
 import xyz.zedler.patrick.grocy.model.QuantityUnit;
 import xyz.zedler.patrick.grocy.model.StockItem;
 import xyz.zedler.patrick.grocy.util.Constants;
 import xyz.zedler.patrick.grocy.util.DateUtil;
 import xyz.zedler.patrick.grocy.util.NumUtil;
+import xyz.zedler.patrick.grocy.view.FilterChip;
+import xyz.zedler.patrick.grocy.view.InputChip;
 
-public class StockItemAdapter extends RecyclerView.Adapter<StockItemAdapter.ViewHolder> {
+public class StockItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private final static String TAG = StockItemAdapter.class.getSimpleName();
 
     private Context context;
-    private ArrayList<StockItem> stockItems;
+    private ArrayList<GroupedListItem> groupedListItems;
     private ArrayList<String> shoppingListProductIds;
     private HashMap<Integer, QuantityUnit> quantityUnits;
     private StockItemAdapterListener listener;
     private int daysExpiringSoon;
     private String sortMode;
     private boolean showDateTracking;
+    private ArrayList<FilterChip> filtersScrollFirst; // first row
+    private ArrayList<InputChip> filtersScrollSecond; // second row
 
     public StockItemAdapter(
             Context context,
@@ -63,24 +69,32 @@ public class StockItemAdapter extends RecyclerView.Adapter<StockItemAdapter.View
             int daysExpiringSoon,
             String sortMode,
             boolean showDateTracking,
-            StockItemAdapterListener listener
+            StockItemAdapterListener listener,
+            ArrayList<FilterChip> filtersScrollFirst,
+            ArrayList<InputChip> filtersScrollSecond
     ) {
         this.context = context;
-        this.stockItems = stockItems;
         this.quantityUnits = quantityUnits;
         this.shoppingListProductIds = shoppingListProductIds;
         this.daysExpiringSoon = daysExpiringSoon;
         this.sortMode = sortMode;
         this.showDateTracking = showDateTracking;
         this.listener = listener;
+        this.filtersScrollFirst = filtersScrollFirst;
+        this.filtersScrollSecond = filtersScrollSecond;
+
+        groupedListItems = new ArrayList<>();
+        groupedListItems.add(new FilterRowFirstItem());
+        groupedListItems.add(new FilterRowSecondItem());
+        groupedListItems.addAll(stockItems);
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolderItem extends RecyclerView.ViewHolder {
         private LinearLayout linearLayoutItemContainer, linearLayoutDays;
         private TextView textViewName, textViewAmount, textViewDays;
         private View iconIsOnShoppingList;
 
-        public ViewHolder(View view) {
+        public ViewHolderItem(View view) {
             super(view);
 
             linearLayoutItemContainer = view.findViewById(R.id.linear_stock_item_container);
@@ -92,22 +106,79 @@ public class StockItemAdapter extends RecyclerView.Adapter<StockItemAdapter.View
         }
     }
 
+    public static class ViewHolderFilterFirst extends RecyclerView.ViewHolder {
+        private LinearLayout linearLayoutFilterContainer;
+
+        public ViewHolderFilterFirst(View view) {
+            super(view);
+
+            linearLayoutFilterContainer = view.findViewById(R.id.linear_filter_container);
+        }
+    }
+
+    public static class ViewHolderFilterSecond extends RecyclerView.ViewHolder {
+        private LinearLayout linearLayoutFilterContainer;
+
+        public ViewHolderFilterSecond(View view) {
+            super(view);
+
+            linearLayoutFilterContainer = view.findViewById(R.id.linear_filter_container);
+        }
+    }
+
     @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return new ViewHolder(
-                LayoutInflater.from(parent.getContext()).inflate(
-                        R.layout.row_stock_item,
-                        parent,
-                        false
-                )
-        );
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if (viewType == GroupedListItem.TYPE_FILTER_ROW_FIRST) {
+            //inflate your layout and pass it to view holder
+            return new ViewHolderFilterFirst(
+                    LayoutInflater.from(parent.getContext()).inflate(
+                            R.layout.view_filter_scroll,
+                            parent,
+                            false
+                    )
+            );
+        } else if (viewType == GroupedListItem.TYPE_FILTER_ROW_SECOND) {
+            //inflate your layout and pass it to view holder
+            return new ViewHolderFilterSecond(
+                    LayoutInflater.from(parent.getContext()).inflate(
+                            R.layout.view_filter_scroll,
+                            parent,
+                            false
+                    )
+            );
+        } else {
+            return new ViewHolderItem(
+                    LayoutInflater.from(parent.getContext()).inflate(
+                            R.layout.row_stock_item,
+                            parent,
+                            false
+                    )
+            );
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
-    public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
-        StockItem stockItem = stockItems.get(holder.getAdapterPosition());
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int position) {
+        if (viewHolder instanceof ViewHolderFilterFirst) {
+            ViewHolderFilterFirst holder = (ViewHolderFilterFirst) viewHolder;
+            holder.linearLayoutFilterContainer.removeAllViews();
+            for(FilterChip filterChip : filtersScrollFirst) {
+                holder.linearLayoutFilterContainer.addView(filterChip);
+            }
+            return;
+        } else if (viewHolder instanceof ViewHolderFilterSecond) {
+            ViewHolderFilterSecond holder = (ViewHolderFilterSecond) viewHolder;
+            holder.linearLayoutFilterContainer.removeAllViews();
+            for(InputChip inputChip : filtersScrollSecond) {
+                holder.linearLayoutFilterContainer.addView(inputChip);
+            }
+            return;
+        }
+
+        ViewHolderItem holder = (ViewHolderItem) viewHolder;
+        StockItem stockItem = (StockItem) groupedListItems.get(viewHolder.getAdapterPosition());
 
         // NAME
 
@@ -232,25 +303,109 @@ public class StockItemAdapter extends RecyclerView.Adapter<StockItemAdapter.View
         this.sortMode = sortMode;
     }
 
-    public void updateData(
-            ArrayList<StockItem> stockItems,
-            ArrayList<String> shoppingListProductIds
-    ) {
-        this.stockItems = stockItems;
-        this.shoppingListProductIds = shoppingListProductIds;
+    @Override
+    public long getItemId(int position) {
+        GroupedListItem groupedListItem = groupedListItems.get(position);
+        if(groupedListItem instanceof StockItem) {
+            return ((StockItem) groupedListItems.get(position)).getProductId();
+        } else if(groupedListItem instanceof FilterRowFirstItem) {
+            return -1;
+        } else {
+            return -2;
+        }
     }
 
     @Override
-    public long getItemId(int position) {
-        return stockItems.get(position).getProductId();
+    public int getItemViewType(int position) {
+        return groupedListItems.get(position).getType();
     }
 
     @Override
     public int getItemCount() {
-        return stockItems != null ? stockItems.size() : 0;
+        return groupedListItems != null ? groupedListItems.size() : 0;
     }
 
     public interface StockItemAdapterListener {
         void onItemRowClicked(int position);
+    }
+
+    private static class FilterRowFirstItem extends GroupedListItem {
+        @Override
+        public int getType() {
+            return GroupedListItem.TYPE_FILTER_ROW_FIRST;
+        }
+    }
+
+    private static class FilterRowSecondItem extends GroupedListItem {
+        @Override
+        public int getType() {
+            return GroupedListItem.TYPE_FILTER_ROW_SECOND;
+        }
+    }
+
+    public void updateList(ArrayList<StockItem> newList, ArrayList<String> shoppingListProductIds) {
+        this.shoppingListProductIds = shoppingListProductIds;
+
+        ArrayList<GroupedListItem> newGroupedListItems = new ArrayList<>();
+        newGroupedListItems.add(new FilterRowFirstItem());
+        newGroupedListItems.add(new FilterRowSecondItem());
+        newGroupedListItems.addAll(newList);
+
+        DiffCallback diffCallback = new DiffCallback(
+                newGroupedListItems,
+                this.groupedListItems
+        );
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(diffCallback);
+        groupedListItems = newGroupedListItems;
+        diffResult.dispatchUpdatesTo(this);
+    }
+
+    static class DiffCallback extends DiffUtil.Callback {
+
+        ArrayList<GroupedListItem> oldItems;
+        ArrayList<GroupedListItem> newItems;
+
+        public DiffCallback(
+                ArrayList<GroupedListItem> newItems,
+                ArrayList<GroupedListItem> oldItems
+        ) {
+            this.newItems = newItems;
+            this.oldItems = oldItems;
+        }
+
+        @Override
+        public int getOldListSize() {
+            return oldItems.size();
+        }
+
+        @Override
+        public int getNewListSize() {
+            return newItems.size();
+        }
+
+        @Override
+        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+            return compare(oldItemPosition, newItemPosition, false);
+        }
+
+        @Override
+        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+            return compare(oldItemPosition, newItemPosition, true);
+        }
+
+        private boolean compare(int oldItemPos, int newItemPos, boolean compareContent) {
+            int oldItemType = oldItems.get(oldItemPos).getType();
+            int newItemType = newItems.get(newItemPos).getType();
+            if(oldItemType != newItemType) return false;
+            if(oldItemType == GroupedListItem.TYPE_ENTRY) {
+                StockItem newItem = (StockItem) newItems.get(newItemPos);
+                StockItem oldItem = (StockItem) oldItems.get(oldItemPos);
+                return compareContent
+                        ? newItem.equals(oldItem)
+                        : newItem.getProductId() == oldItem.getProductId();
+            } else {
+                return true; // Filter row items are always on top
+            }
+        }
     }
 }

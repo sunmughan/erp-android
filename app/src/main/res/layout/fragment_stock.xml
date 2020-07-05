@@ -133,67 +133,14 @@
                 android:layout_marginBottom="?actionBarSize"
                 layout="@layout/partial_error"/>
 
-            <androidx.core.widget.NestedScrollView
-                android:id="@+id/scroll_stock"
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_stock"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:overScrollMode="never">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingTop="8dp"
-                    android:paddingBottom="100dp">
-
-                    <HorizontalScrollView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:scrollbars="none"
-                        android:overScrollMode="ifContentScrolls">
-
-                        <LinearLayout
-                            android:id="@+id/linear_stock_filter_container_top"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center"
-                            android:paddingStart="12dp"
-                            android:paddingEnd="12dp"/>
-
-                    </HorizontalScrollView>
-
-                    <HorizontalScrollView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:scrollbars="none"
-                        android:overScrollMode="ifContentScrolls">
-
-                        <LinearLayout
-                            android:id="@+id/linear_stock_filter_container_bottom"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center"
-                            android:paddingStart="12dp"
-                            android:paddingEnd="12dp"
-                            android:animateLayoutChanges="true"/>
-
-                    </HorizontalScrollView>
-
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/recycler_stock"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:paddingBottom="8dp"
-                        android:overScrollMode="never"
-                        android:nestedScrollingEnabled="false"
-                        android:clipToPadding="false"/>
-
-                </LinearLayout>
-
-            </androidx.core.widget.NestedScrollView>
+                android:layout_marginTop="8dp"
+                android:paddingBottom="100dp"
+                android:overScrollMode="never"
+                android:clipToPadding="false"/>
 
         </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
