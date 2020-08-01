@@ -57,10 +57,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 
-import xyz.zedler.patrick.grocy.MainActivity;
+import xyz.zedler.patrick.grocy.activity.MainActivity;
 import xyz.zedler.patrick.grocy.R;
-import xyz.zedler.patrick.grocy.ScanBatchActivity;
-import xyz.zedler.patrick.grocy.ScanInputActivity;
+import xyz.zedler.patrick.grocy.activity.ScanBatchActivity;
+import xyz.zedler.patrick.grocy.activity.ScanInputActivity;
 import xyz.zedler.patrick.grocy.adapter.MatchArrayAdapter;
 import xyz.zedler.patrick.grocy.adapter.ShoppingListItemAdapter;
 import xyz.zedler.patrick.grocy.api.GrocyApi;
@@ -196,6 +196,10 @@ public class PurchaseFragment extends Fragment {
         // INITIALIZE VIEWS
 
         binding.framePurchaseBack.setOnClickListener(v -> activity.onBackPressed());
+
+        binding.linearPurchaseShoppingListItem.linearShoppingListItemContainer.setBackground(
+                ContextCompat.getDrawable(activity, R.drawable.bg_list_item_visible_ripple)
+        );
 
         // swipe refresh
 
@@ -460,7 +464,7 @@ public class PurchaseFragment extends Fragment {
 
         selectedLocationId = savedInstanceState.getInt("selectedLocationId");
         selectedStoreId = savedInstanceState.getInt("selectedStoreId");
-        shoppingListItemPos = savedInstanceState.getInt("currentShoppingListItem");
+        shoppingListItemPos = savedInstanceState.getInt("shoppingListItemPos");
         selectedBestBeforeDate = savedInstanceState.getString("selectedBestBeforeDate");
 
         amount = savedInstanceState.getDouble("amount");

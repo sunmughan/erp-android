@@ -53,9 +53,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import xyz.zedler.patrick.grocy.MainActivity;
+import xyz.zedler.patrick.grocy.activity.MainActivity;
 import xyz.zedler.patrick.grocy.R;
-import xyz.zedler.patrick.grocy.ShoppingActivity;
+import xyz.zedler.patrick.grocy.activity.ShoppingActivity;
 import xyz.zedler.patrick.grocy.adapter.ShoppingListItemAdapter;
 import xyz.zedler.patrick.grocy.adapter.StockPlaceholderAdapter;
 import xyz.zedler.patrick.grocy.animator.ItemAnimator;
@@ -135,7 +135,6 @@ public class ShoppingListFragment extends Fragment
     private boolean isDataStored;
     private boolean showOffline;
     private boolean isRestoredInstance;
-    private boolean isSetupAfterFragmentHasBecomeVisible;
     private boolean debug = false;
 
     @Override
@@ -335,7 +334,7 @@ public class ShoppingListFragment extends Fragment
         binding.recyclerShoppingList.setItemAnimator(new ItemAnimator());
         binding.recyclerShoppingList.setAdapter(new StockPlaceholderAdapter());
 
-        if(!isSetupAfterFragmentHasBecomeVisible) {
+        if(swipeBehavior == null) {
             swipeBehavior = new SwipeBehavior(activity) {
                 @Override
                 public void instantiateUnderlayButton(
@@ -395,7 +394,6 @@ public class ShoppingListFragment extends Fragment
                 TAG
         );
         setArguments(null);
-        isSetupAfterFragmentHasBecomeVisible = false;
     }
 
     @Override
@@ -478,7 +476,6 @@ public class ShoppingListFragment extends Fragment
     public void onHiddenChanged(boolean hidden) {
         if(hidden) return;
 
-        isSetupAfterFragmentHasBecomeVisible = true;
         if(getView() != null) onViewCreated(getView(), null);
     }
 
@@ -565,10 +562,7 @@ public class ShoppingListFragment extends Fragment
                 dlHelper.getShoppingListItems(listItems -> this.shoppingListItems = listItems),
                 dlHelper.getProductGroups(listItems -> this.productGroups = listItems),
                 dlHelper.getQuantityUnits(listItems -> this.quantityUnits = listItems),
-                dlHelper.getProducts(listItems -> {
-                    this.products = listItems;
-                    Log.i(TAG, "download: " + this.products);
-                }),
+                dlHelper.getProducts(listItems -> this.products = listItems),
                 dlHelper.getVolatile((expiring, expired, missing) -> missingItems = missing)
         );
         queue.start();
@@ -579,8 +573,6 @@ public class ShoppingListFragment extends Fragment
             showOffline = false;
             updateUI();
         }
-
-        Log.i(TAG, "onQueueEmpty: " + products);
 
         if(!isDataStored) {
             // set shopping list if chosen with name on fragment start
@@ -1335,6 +1327,7 @@ public class ShoppingListFragment extends Fragment
                     )
             );
         }
+        queue.start();
     }
 
     @Override

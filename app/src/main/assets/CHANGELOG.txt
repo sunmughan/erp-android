@@ -1,7 +1,18 @@
+1.7.1:
+- Bug fixes and improvements
+
+1.7.0:
+- Swedish translation (thanks contributors!)
+- Front camera setting (e.g. for tablets)
+- Improved feedback
+- Removed shopping list shortcut due to shortcut limit in most launchers
+- Bug fixes and improvements
+
 1.6.0:
 - Purchase all items in shopping list
-- Bug fixes and improvements
+- Fixed sync bug in shopping list
 - Updated translations
+- Bug fixes and improvements
 
 1.5.0:
 - Our app is now translatable: Visit us on GitHub for more information
