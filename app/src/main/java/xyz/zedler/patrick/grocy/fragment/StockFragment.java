@@ -57,8 +57,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import xyz.zedler.patrick.grocy.activity.MainActivity;
 import xyz.zedler.patrick.grocy.R;
+import xyz.zedler.patrick.grocy.activity.MainActivity;
 import xyz.zedler.patrick.grocy.activity.ScanInputActivity;
 import xyz.zedler.patrick.grocy.adapter.StockItemAdapter;
 import xyz.zedler.patrick.grocy.adapter.StockPlaceholderAdapter;
@@ -80,12 +80,12 @@ import xyz.zedler.patrick.grocy.model.StockItem;
 import xyz.zedler.patrick.grocy.util.AnimUtil;
 import xyz.zedler.patrick.grocy.util.ClickUtil;
 import xyz.zedler.patrick.grocy.util.Constants;
+import xyz.zedler.patrick.grocy.util.DateUtil;
 import xyz.zedler.patrick.grocy.util.IconUtil;
 import xyz.zedler.patrick.grocy.util.NumUtil;
 import xyz.zedler.patrick.grocy.util.SortUtil;
 import xyz.zedler.patrick.grocy.view.FilterChip;
 import xyz.zedler.patrick.grocy.view.InputChip;
-import xyz.zedler.patrick.grocy.web.WebRequest;
 
 public class StockFragment extends Fragment implements StockItemAdapter.StockItemAdapterListener {
 
@@ -97,7 +97,6 @@ public class StockFragment extends Fragment implements StockItemAdapter.StockIte
     private Gson gson;
     private GrocyApi grocyApi;
     private AppBarBehavior appBarBehavior;
-    private WebRequest request;
     private StockItemAdapter stockItemAdapter;
     private ClickUtil clickUtil;
     private AnimUtil animUtil;
@@ -156,7 +155,7 @@ public class StockFragment extends Fragment implements StockItemAdapter.StockIte
             binding.recyclerStock.setAdapter(null);
             binding = null;
         }
-        if(dlHelper != null) dlHelper.close();
+        if(dlHelper != null) dlHelper.destroy();
     }
 
     @Override
@@ -190,8 +189,6 @@ public class StockFragment extends Fragment implements StockItemAdapter.StockIte
         // WEB REQUESTS
 
         dlHelper = new DownloadHelper(activity, TAG);
-
-        request = new WebRequest(activity.getRequestQueue());
         grocyApi = activity.getGrocy();
         gson = new Gson();
 
@@ -329,16 +326,20 @@ public class StockFragment extends Fragment implements StockItemAdapter.StockIte
                         List<UnderlayButton> underlayButtons
                 ) {
                     if( ! (viewHolder instanceof StockItemAdapter.ViewHolderItem)) return;
+                    if(viewHolder.getAdapterPosition() >= stockItems.size()) return;
                     StockItem stockItem = stockItems.get(viewHolder.getAdapterPosition());
                     if(stockItem.getAmount() > 0
                             && stockItem.getProduct().getEnableTareWeightHandling() == 0
                     ) {
                         underlayButtons.add(new SwipeBehavior.UnderlayButton(
                                 R.drawable.ic_round_consume_product,
-                                position -> performAction(
-                                        Constants.ACTION.CONSUME,
-                                        displayedItems.get(position).getProduct().getId()
-                                )
+                                position -> {
+                                    if(position >= displayedItems.size()) return;
+                                    performAction(
+                                            Constants.ACTION.CONSUME,
+                                            displayedItems.get(position).getProduct().getId()
+                                    );
+                                }
                         ));
                     }
                     if(stockItem.getAmount()
@@ -348,10 +349,13 @@ public class StockFragment extends Fragment implements StockItemAdapter.StockIte
                     ) {
                         underlayButtons.add(new SwipeBehavior.UnderlayButton(
                                 R.drawable.ic_round_open,
-                                position -> performAction(
-                                        Constants.ACTION.OPEN,
-                                        displayedItems.get(position).getProduct().getId()
-                                )
+                                position -> {
+                                    if(position >= displayedItems.size()) return;
+                                    performAction(
+                                            Constants.ACTION.OPEN,
+                                            displayedItems.get(position).getProduct().getId()
+                                    );
+                                }
                         ));
                     }
                     if(underlayButtons.isEmpty()) {
@@ -526,6 +530,11 @@ public class StockFragment extends Fragment implements StockItemAdapter.StockIte
 
     private void download() {
         binding.swipeStock.setRefreshing(true);
+        if(expiringItems == null) {
+            expiringItems = new ArrayList<>();
+        } else {
+            expiringItems.clear();
+        }
         AtomicBoolean stockItemsDownloaded = new AtomicBoolean(false);
         AtomicBoolean volatileItemsDownloaded = new AtomicBoolean(false);
         DownloadHelper.Queue queue = dlHelper.newQueue(this::onQueueEmpty, this::onDownloadError);
@@ -541,23 +550,43 @@ public class StockFragment extends Fragment implements StockItemAdapter.StockIte
                 }),
                 dlHelper.getStockItems(stockItems -> {
                     this.stockItems = stockItems;
-                    missingStockItems = new ArrayList<>();
+                    if(missingStockItems == null) {
+                        missingStockItems = new ArrayList<>();
+                    } else {
+                        missingStockItems.clear();
+                    }
                     for(StockItem stockItem : stockItems) {
-                        if(stockItem.getProduct().getMinStockAmount() > 0
-                                && stockItem.getAmount() < stockItem.getProduct().getMinStockAmount()
-                        ) {
-                            missingStockItems.add(stockItem);
+                        if(stockItem.getProduct().getMinStockAmount() > 0) {
+                            if(stockItem.getAmount() < stockItem.getProduct().getMinStockAmount()) {
+                                missingStockItems.add(stockItem);
+                            }
+                        }
+                        if(DateUtil.getDaysFromNow(stockItem.getBestBeforeDate()) == 0) {
+                            // these stockItems are not in volatile items (API bug?)
+                            if(!expiringItems.contains(stockItem)) {
+                                expiringItems.add(stockItem);
+                            }
                         }
                     }
+                    // update of chip is necessary because number of items maybe has changed
+                    // (if this lambda function was executed after the one of getVolatile)
+                    chipExpiring.setText(
+                            activity.getString(R.string.msg_expiring_products, expiringItems.size())
+                    );
                     stockItemsDownloaded.set(true);
                     if(volatileItemsDownloaded.get()) downloadMissingItemDetails(queue);
                 }),
                 dlHelper.getVolatile((expiring, expired, missing) -> {
-                    expiringItems = expiring;
+                    for(StockItem stockItem : expiring) {
+                        // checking is necessary because same item can already be added above
+                        if(!expiringItems.contains(stockItem)) {
+                            expiringItems.add(stockItem);
+                        }
+                    }
                     expiredItems = expired;
                     missingItems = missing;
                     chipExpiring.setText(
-                            activity.getString(R.string.msg_expiring_products, expiring.size())
+                            activity.getString(R.string.msg_expiring_products, expiringItems.size())
                     );
                     chipExpired.setText(
                             activity.getString(R.string.msg_expired_products, expired.size())
@@ -856,7 +885,7 @@ public class StockFragment extends Fragment implements StockItemAdapter.StockIte
     }
 
     private void loadProductDetailsByBarcode(String barcode) {
-        request.get(
+        dlHelper.get(
                 grocyApi.getStockProductByBarcode(barcode),
                 response -> {
                     ProductDetails productDetails = gson.fromJson(
@@ -924,7 +953,7 @@ public class StockFragment extends Fragment implements StockItemAdapter.StockIte
         } catch (JSONException e) {
             if(debug) Log.e(TAG, "consumeProduct: " + e);
         }
-        request.post(
+        dlHelper.post(
                 grocyApi.consumeProduct(productId),
                 body,
                 response -> {
@@ -960,7 +989,7 @@ public class StockFragment extends Fragment implements StockItemAdapter.StockIte
             String transactionId,
             boolean undo
     ) {
-        request.get(
+        dlHelper.get(
                 grocyApi.getStockProductDetails(stockItemOld.getProductId()),
                 response -> {
 
@@ -1019,7 +1048,7 @@ public class StockFragment extends Fragment implements StockItemAdapter.StockIte
                             ).setAction(
                                     activity.getString(R.string.action_undo),
                                     // on success, this method will be executed again to update
-                                    v -> request.post(
+                                    v -> dlHelper.post(
                                             grocyApi.undoStockTransaction(transactionId),
                                             response1 -> updateConsumedStockItem(
                                                     index,
@@ -1060,7 +1089,7 @@ public class StockFragment extends Fragment implements StockItemAdapter.StockIte
         } catch (JSONException e) {
             if(debug) Log.e(TAG, "openProduct: " + e);
         }
-        request.post(
+        dlHelper.post(
                 grocyApi.openProduct(productId),
                 body,
                 response -> {
@@ -1087,7 +1116,7 @@ public class StockFragment extends Fragment implements StockItemAdapter.StockIte
             String transactionId,
             boolean undo
     ) {
-        request.get(
+        dlHelper.get(
                 grocyApi.getStockProductDetails(productId),
                 response -> {
 
@@ -1127,7 +1156,7 @@ public class StockFragment extends Fragment implements StockItemAdapter.StockIte
                                     ContextCompat.getColor(activity, R.color.secondary)
                             ).setAction(
                                     activity.getString(R.string.action_undo),
-                                    v -> request.post(
+                                    v -> dlHelper.post(
                                             grocyApi.undoStockTransaction(transactionId),
                                             response1 -> updateOpenedStockItem(
                                                     index,

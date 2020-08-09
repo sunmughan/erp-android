@@ -37,6 +37,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceManager;
@@ -53,8 +54,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import xyz.zedler.patrick.grocy.activity.MainActivity;
 import xyz.zedler.patrick.grocy.R;
+import xyz.zedler.patrick.grocy.activity.MainActivity;
 import xyz.zedler.patrick.grocy.activity.ShoppingActivity;
 import xyz.zedler.patrick.grocy.adapter.ShoppingListItemAdapter;
 import xyz.zedler.patrick.grocy.adapter.StockPlaceholderAdapter;
@@ -71,8 +72,8 @@ import xyz.zedler.patrick.grocy.fragment.bottomSheetDialog.ShoppingListsBottomSh
 import xyz.zedler.patrick.grocy.fragment.bottomSheetDialog.TextEditBottomSheetDialogFragment;
 import xyz.zedler.patrick.grocy.helper.DownloadHelper;
 import xyz.zedler.patrick.grocy.helper.EmptyStateHelper;
-import xyz.zedler.patrick.grocy.helper.ShoppingListHelper;
 import xyz.zedler.patrick.grocy.helper.LoadOfflineDataShoppingListHelper;
+import xyz.zedler.patrick.grocy.helper.ShoppingListHelper;
 import xyz.zedler.patrick.grocy.helper.StoreOfflineDataShoppingListHelper;
 import xyz.zedler.patrick.grocy.model.GroupedListItem;
 import xyz.zedler.patrick.grocy.model.MissingItem;
@@ -87,12 +88,11 @@ import xyz.zedler.patrick.grocy.util.Constants;
 import xyz.zedler.patrick.grocy.util.IconUtil;
 import xyz.zedler.patrick.grocy.util.SortUtil;
 import xyz.zedler.patrick.grocy.view.FilterChip;
-import xyz.zedler.patrick.grocy.web.WebRequest;
 
-public class ShoppingListFragment extends Fragment
-        implements ShoppingListItemAdapter.ShoppingListItemAdapterListener,
-            LoadOfflineDataShoppingListHelper.AsyncResponse,
-            StoreOfflineDataShoppingListHelper.AsyncResponse {
+public class ShoppingListFragment extends Fragment implements
+        ShoppingListItemAdapter.ShoppingListItemAdapterListener,
+        LoadOfflineDataShoppingListHelper.AsyncResponse,
+        StoreOfflineDataShoppingListHelper.AsyncResponse {
 
     private final static String TAG = Constants.UI.SHOPPING_LIST;
 
@@ -102,7 +102,6 @@ public class ShoppingListFragment extends Fragment
     private AppDatabase database;
     private GrocyApi grocyApi;
     private AppBarBehavior appBarBehavior;
-    private WebRequest request;
     private ShoppingListItemAdapter shoppingListItemAdapter;
     private ClickUtil clickUtil;
     private AnimUtil animUtil;
@@ -151,10 +150,7 @@ public class ShoppingListFragment extends Fragment
     public void onDestroyView() {
         super.onDestroyView();
 
-        if(emptyStateHelper != null) {
-            emptyStateHelper.destroyInstance();
-            emptyStateHelper = null;
-        }
+        if(emptyStateHelper != null) emptyStateHelper.destroyInstance();
         if(binding != null) {
             binding.recyclerShoppingList.animate().cancel();
             binding.buttonShoppingListLists.animate().cancel();
@@ -162,39 +158,7 @@ public class ShoppingListFragment extends Fragment
             binding.recyclerShoppingList.setAdapter(null);
             binding = null;
         }
-
-        activity = null;
-        sharedPrefs = null;
-        dlHelper = null;
-        database = null;
-        grocyApi = null;
-        request = null;
-        appBarBehavior = null;
-        shoppingListItemAdapter = null;
-        clickUtil = null;
-        animUtil = null;
-        swipeBehavior = null;
-        chipMissing = null;
-        chipUndone = null;
-        shoppingLists = null;
-        shoppingListItems = null;
-        shoppingListItemsSelected = null;
-        missingItems = null;
-        missingShoppingListItems = null;
-        undoneShoppingListItems = null;
-        filteredItems = null;
-        displayedItems = null;
-        quantityUnits = null;
-        products = null;
-        productGroups = null;
-        groupedListItems = null;
-        shoppingListHashMap = null;
-        startupShoppingListName = null;
-        itemsToDisplay = null;
-        search = null;
-        errorState = null;
-
-        System.gc();
+        dlHelper.destroy();
     }
 
     @Override
@@ -217,10 +181,7 @@ public class ShoppingListFragment extends Fragment
         // WEB
 
         dlHelper = new DownloadHelper(activity, TAG);
-
         database = AppDatabase.getAppDatabase(activity.getApplicationContext());
-
-        request = new WebRequest(activity.getRequestQueue());
         grocyApi = activity.getGrocy();
 
         // INITIALIZE VARIABLES
@@ -496,6 +457,7 @@ public class ShoppingListFragment extends Fragment
             download();
         } else {
             showOffline = true;
+            appBarOfflineInfo(true);
             new LoadOfflineDataShoppingListHelper(
                     AppDatabase.getAppDatabase(activity.getApplicationContext()),
                     this
@@ -511,6 +473,7 @@ public class ShoppingListFragment extends Fragment
             binding.swipeShoppingList.setRefreshing(false);
             if(!showOffline) {
                 showOffline = true;
+                appBarOfflineInfo(true);
                 updateUI();
                 new LoadOfflineDataShoppingListHelper(
                         AppDatabase.getAppDatabase(activity.getApplicationContext()),
@@ -571,6 +534,7 @@ public class ShoppingListFragment extends Fragment
     private void onQueueEmpty() {
         if(showOffline) {
             showOffline = false;
+            appBarOfflineInfo(false);
             updateUI();
         }
 
@@ -653,6 +617,7 @@ public class ShoppingListFragment extends Fragment
         if(activity == null) return;
         if(!showOffline) {
             showOffline = true;
+            appBarOfflineInfo(true);
             updateUI();
         }
         new LoadOfflineDataShoppingListHelper(
@@ -895,7 +860,7 @@ public class ShoppingListFragment extends Fragment
                     showMessage(activity.getString(R.string.error_undefined));
                     if(debug) Log.e(TAG, "toggleDoneStatus: " + error);
                 }
-        ).perform();
+        ).perform(dlHelper.getUuid());
     }
 
     private void updateDoneStatus(ShoppingListItem shoppingListItem, int position) {
@@ -951,7 +916,7 @@ public class ShoppingListFragment extends Fragment
         } catch (JSONException e) {
             if(debug) Log.e(TAG, "saveNotes: " + e);
         }
-        request.put(
+        dlHelper.put(
                 grocyApi.getObject(GrocyApi.ENTITY.SHOPPING_LISTS, selectedShoppingListId),
                 body,
                 response -> {
@@ -981,7 +946,7 @@ public class ShoppingListFragment extends Fragment
 
     public void deleteItem(int position) {
         ShoppingListItem shoppingListItem = (ShoppingListItem) groupedListItems.get(position);
-        request.delete(
+        dlHelper.delete(
                 grocyApi.getObject(GrocyApi.ENTITY.SHOPPING_LIST, shoppingListItem.getId()),
                 response -> removeItemFromList(position),
                 error -> {
@@ -1052,7 +1017,7 @@ public class ShoppingListFragment extends Fragment
                     } catch (JSONException e) {
                         if(debug) Log.e(TAG, "setUpBottomMenu: add missing: " + e);
                     }
-                    request.post(
+                    dlHelper.post(
                             grocyApi.addMissingProducts(),
                             jsonObject,
                             response -> {
@@ -1179,7 +1144,7 @@ public class ShoppingListFragment extends Fragment
         } catch (JSONException e) {
             if(debug) Log.e(TAG, "clearShoppingList: " + e);
         }
-        request.post(
+        dlHelper.post(
                 grocyApi.clearShoppingList(),
                 jsonObject,
                 response -> responseListener.onResponse(),
@@ -1226,7 +1191,7 @@ public class ShoppingListFragment extends Fragment
             if(debug) Log.e(TAG, "deleteShoppingList: delete list: " + e);
         }
 
-        request.delete(
+        dlHelper.delete(
                 grocyApi.getObject(
                         GrocyApi.ENTITY.SHOPPING_LISTS,
                         shoppingList.getId()
@@ -1267,7 +1232,7 @@ public class ShoppingListFragment extends Fragment
         for(ShoppingListItem listItem : shoppingListItems) {
             if(!listIds.contains(listItem.getShoppingListId())) {
                 if(debug) Log.i(TAG, "tidyUpItems: " + listItem);
-                request.delete(
+                dlHelper.delete(
                         grocyApi.getObject(GrocyApi.ENTITY.SHOPPING_LIST, listItem.getId()),
                         response -> new Thread(() -> itemDao.delete(listItem) // delete in db too
                         ).start(),
@@ -1439,6 +1404,39 @@ public class ShoppingListFragment extends Fragment
                         ? Constants.UI.SHOPPING_LIST_OFFLINE_DEFAULT
                         : Constants.UI.SHOPPING_LIST_DEFAULT
         );
+    }
+
+    private void appBarOfflineInfo(boolean visible) {
+        boolean currentState = binding.linearOfflineError.getVisibility() == View.VISIBLE;
+        if(visible == currentState) return;
+        if(visible) {
+            binding.linearOfflineError.setAlpha(0);
+            binding.linearOfflineError.setVisibility(View.VISIBLE);
+            binding.linearOfflineError.animate().alpha(1).setDuration(125).withEndAction(
+                    () -> updateScrollViewHeight(true)
+            ).start();
+        } else {
+            binding.linearOfflineError.animate().alpha(0).setDuration(125).withEndAction(
+                    () -> {
+                        binding.linearOfflineError.setVisibility(View.GONE);
+                        updateScrollViewHeight(false);
+                    }
+            ).start();
+        }
+    }
+
+    private void updateScrollViewHeight(boolean visible) {
+        // get offline indicator height
+        int offlineIndicatorHeight;
+        if(visible) {
+            offlineIndicatorHeight = binding.linearOfflineError.getHeight();
+        } else {
+            offlineIndicatorHeight = 0;
+        }
+        CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams)
+                binding.scrollShoppingList.getLayoutParams();
+        layoutParams.setMargins(0, offlineIndicatorHeight, 0, 0);
+        binding.scrollShoppingList.setLayoutParams(layoutParams);
     }
 
     private void showMessage(String msg) {
