@@ -16,7 +16,6 @@ import androidx.navigation.NavBackStackEntry;
 import androidx.preference.PreferenceManager;
 
 import com.journeyapps.barcodescanner.BarcodeResult;
-import com.journeyapps.barcodescanner.DecoratedBarcodeView;
 import com.journeyapps.barcodescanner.camera.CameraSettings;
 
 import xyz.zedler.patrick.grocy.R;
@@ -35,7 +34,7 @@ public class ScanInputFragment extends BaseFragment
     private FragmentScanInputBinding binding;
     private ScanInputCaptureManager capture;
     private BarcodeRipple barcodeRipple;
-    private DecoratedBarcodeView barcodeScannerView;
+    private xyz.zedler.patrick.grocy.barcode.DecoratedBarcodeView barcodeScannerView;
 
     private boolean isTorchOn;
 
@@ -159,7 +158,7 @@ public class ScanInputFragment extends BaseFragment
     @Override
     public void onBarcodeResult(BarcodeResult result) {
         if(result.getText().isEmpty()) resumeScan();
-        barcodeRipple.pauseAnimation();
+        //barcodeRipple.pauseAnimation();
         NavBackStackEntry backStackEntry = findNavController().getPreviousBackStackEntry();
         assert backStackEntry != null;
         backStackEntry.getSavedStateHandle().set(Constants.ARGUMENT.BARCODE, result.getText());
@@ -168,13 +167,13 @@ public class ScanInputFragment extends BaseFragment
 
     @Override
     public void pauseScan() {
-        barcodeRipple.pauseAnimation();
+        //barcodeRipple.pauseAnimation();
         capture.onPause();
     }
 
     @Override
     public void resumeScan() {
-        barcodeRipple.resumeAnimation();
+        //barcodeRipple.resumeAnimation();
         capture.onResume();
     }
 }

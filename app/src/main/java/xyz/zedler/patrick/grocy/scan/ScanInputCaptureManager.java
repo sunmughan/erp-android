@@ -37,10 +37,9 @@ import com.google.zxing.client.android.InactivityTimer;
 import com.google.zxing.client.android.Intents;
 import com.journeyapps.barcodescanner.BarcodeCallback;
 import com.journeyapps.barcodescanner.BarcodeResult;
-import com.journeyapps.barcodescanner.CameraPreview;
-import com.journeyapps.barcodescanner.DecoratedBarcodeView;
 
 import xyz.zedler.patrick.grocy.R;
+import xyz.zedler.patrick.grocy.barcode.CameraPreview;
 import xyz.zedler.patrick.grocy.util.VibratorUtil;
 
 public class ScanInputCaptureManager {
@@ -50,7 +49,7 @@ public class ScanInputCaptureManager {
     private static int cameraPermissionReqCode = 250;
 
     private Activity activity;
-    private DecoratedBarcodeView barcodeView;
+    private xyz.zedler.patrick.grocy.barcode.DecoratedBarcodeView barcodeView;
 
     private boolean showDialogIfMissingCameraPermission = true;
     private String missingCameraPermissionDialogMessage = "";
@@ -81,7 +80,7 @@ public class ScanInputCaptureManager {
 
     public ScanInputCaptureManager(
             Activity activity,
-            DecoratedBarcodeView barcodeView,
+            xyz.zedler.patrick.grocy.barcode.DecoratedBarcodeView barcodeView,
             BarcodeListener barcodeListener
     ) {
         this.activity = activity;
