@@ -1,8 +1,10 @@
 package xyz.zedler.patrick.grocy.barcode;
 
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Message;
 import android.util.Log;
 
 import com.google.android.gms.tasks.Task;
@@ -12,10 +14,12 @@ import com.google.mlkit.vision.barcode.BarcodeScannerOptions;
 import com.google.mlkit.vision.barcode.BarcodeScanning;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.zxing.LuminanceSource;
+import com.google.zxing.ResultPoint;
 import com.google.zxing.client.android.R;
 import com.journeyapps.barcodescanner.Decoder;
 import com.journeyapps.barcodescanner.Util;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -158,10 +162,17 @@ public class DecoderThread {
                 .addOnSuccessListener(barcodes -> {
                     // Task completed successfully
                     // ...
+                    List<ResultPoint> resultPoints = new ArrayList<>();
                     //Log.i(TAG, "onPreview: " + barcodes);
                     for(Barcode barcode : barcodes) {
                         Log.i(TAG, "decode: " + barcode.getRawValue());
+                        Point[] cornerPoints = barcode.getCornerPoints();
+                        if(cornerPoints != null) for(Point point : cornerPoints) {
+                            resultPoints.add(new ResultPoint(point.x, point.y));
+                        }
                     }
+                    Message message = Message.obtain(resultHandler, R.id.zxing_possible_result_points, resultPoints);
+                    message.sendToTarget();
                     if(barcodes.isEmpty()) Log.i(TAG, "decode: []");
                     requestNextPreview();
                 })
