@@ -6,7 +6,6 @@ import android.content.pm.PackageManager;
 import android.graphics.drawable.Animatable;
 import android.media.Image;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
 import android.util.Size;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -48,10 +47,9 @@ public class ScanInputFragment extends BaseFragment {
 
     private MainActivity activity;
     private FragmentScanInputBinding binding;
+    private SharedPreferences sharedPrefs;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private Camera camera;
-
-    private boolean isTorchOn;
 
     @Override
     public View onCreateView(
@@ -76,8 +74,7 @@ public class ScanInputFragment extends BaseFragment {
         activity = (MainActivity) getActivity();
         assert activity != null;
 
-        // GET PREFERENCES
-        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(activity);
+        sharedPrefs = PreferenceManager.getDefaultSharedPreferences(activity);
 
         binding.frameBack.setOnClickListener(v -> activity.onBackPressed());
 
@@ -113,9 +110,12 @@ public class ScanInputFragment extends BaseFragment {
         Preview preview = new Preview.Builder()
                 .build();
 
-        CameraSelector cameraSelector = new CameraSelector.Builder()
-                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-                .build();
+        CameraSelector cameraSelector;
+        if(sharedPrefs.getBoolean(Constants.PREF.USE_FRONT_CAM, false)) {
+            cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
+        } else {
+            cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+        }
 
         preview.setSurfaceProvider(binding.previewView.createSurfaceProvider());
 
@@ -144,9 +144,6 @@ public class ScanInputFragment extends BaseFragment {
                     mediaImage,
                     imageProxy.getImageInfo().getRotationDegrees()
             );
-
-            DisplayMetrics displaymetrics = new DisplayMetrics();
-            activity.getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
 
             scanner.process(inputImage).addOnSuccessListener(barcodes -> {
                 imageProxy.close();
