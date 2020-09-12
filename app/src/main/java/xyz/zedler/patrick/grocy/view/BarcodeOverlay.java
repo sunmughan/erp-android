@@ -19,28 +19,34 @@ package xyz.zedler.patrick.grocy.view;
     Copyright 2020 by Patrick Zedler & Dominic Zedler
 */
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.util.AttributeSet;
 import android.view.View;
 
 import androidx.annotation.ColorRes;
 import androidx.annotation.Nullable;
+import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 
 import com.google.mlkit.vision.barcode.Barcode;
+import com.google.mlkit.vision.common.InputImage;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import xyz.zedler.patrick.grocy.R;
+import xyz.zedler.patrick.grocy.util.UnitUtil;
 
 public class BarcodeOverlay extends View {
 
     private Context context;
     private Paint paintRect = new Paint();
     private List<Barcode> barcodes;
+    private InputImage inputImage;
+    private PreviewView previewView;
 
     public BarcodeOverlay(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -50,23 +56,30 @@ public class BarcodeOverlay extends View {
         paintRect.setStyle(Paint.Style.STROKE);
         paintRect.setColor(getColor(R.color.retro_green));
         paintRect.setAntiAlias(true);
-
-        barcodes = new ArrayList<>();
+        paintRect.setStrokeWidth(UnitUtil.getDp(context, 8));
     }
 
-    public void drawRectangles(List<Barcode> barcodes) {
+    public void drawRectangles(List<Barcode> barcodes, InputImage inputImage, PreviewView previewView) {
         this.barcodes = barcodes;
+        this.inputImage = inputImage;
+        this.previewView = previewView;
         invalidate();
     }
 
+    @SuppressLint("RestrictedApi")
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         // Pass it a list of RectF (rectBounds)
         //rectBounds.forEach { canvas.drawRect(it, paint) }
+        if(barcodes == null || inputImage == null || previewView == null) return;
         for(Barcode barcode : barcodes) {
-            if(barcode.getBoundingBox() == null) return;
-            canvas.drawRect(barcode.getBoundingBox(), paintRect);
+            /*if(barcode.getBoundingBox() == null) return;
+            canvas.drawRect(barcode.getBoundingBox(), paintRect);*/
+            if(barcode.getCornerPoints() == null) return;
+            for(Point point : barcode.getCornerPoints()) {
+                canvas.drawPoint(point.x, point.y, paintRect);
+            }
         }
     }
 

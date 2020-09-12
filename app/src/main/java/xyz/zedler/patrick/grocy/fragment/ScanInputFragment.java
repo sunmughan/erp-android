@@ -6,7 +6,7 @@ import android.content.pm.PackageManager;
 import android.graphics.drawable.Animatable;
 import android.media.Image;
 import android.os.Bundle;
-import android.util.Log;
+import android.util.DisplayMetrics;
 import android.util.Size;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -20,7 +20,9 @@ import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.Preview;
+import androidx.camera.core.TorchState;
 import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 import androidx.navigation.NavBackStackEntry;
 import androidx.preference.PreferenceManager;
@@ -31,18 +33,16 @@ import com.google.mlkit.vision.barcode.BarcodeScanner;
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions;
 import com.google.mlkit.vision.barcode.BarcodeScanning;
 import com.google.mlkit.vision.common.InputImage;
-import com.journeyapps.barcodescanner.BarcodeResult;
 
 import java.util.concurrent.ExecutionException;
 
 import xyz.zedler.patrick.grocy.R;
 import xyz.zedler.patrick.grocy.activity.MainActivity;
 import xyz.zedler.patrick.grocy.databinding.FragmentScanInputBinding;
-import xyz.zedler.patrick.grocy.scan.ScanInputCaptureManager;
 import xyz.zedler.patrick.grocy.util.Constants;
+import xyz.zedler.patrick.grocy.util.VibratorUtil;
 
-public class ScanInputFragment extends BaseFragment
-        implements ScanInputCaptureManager.BarcodeListener {
+public class ScanInputFragment extends BaseFragment {
 
     private final static String TAG = ScanInputFragment.class.getSimpleName();
 
@@ -81,6 +81,8 @@ public class ScanInputFragment extends BaseFragment
 
         binding.frameBack.setOnClickListener(v -> activity.onBackPressed());
 
+        binding.previewView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
+
         cameraProviderFuture = ProcessCameraProvider.getInstance(activity);
         cameraProviderFuture.addListener(() -> {
             try {
@@ -88,8 +90,6 @@ public class ScanInputFragment extends BaseFragment
                 bindPreview(cameraProvider);
             } catch (ExecutionException | InterruptedException ignored) {}
         }, ContextCompat.getMainExecutor(activity));
-
-        isTorchOn = false;
 
         // UPDATE UI
         updateUI((getArguments() == null
@@ -139,21 +139,30 @@ public class ScanInputFragment extends BaseFragment
                 imageProxy.close();
                 return;
             }
+
             InputImage inputImage = InputImage.fromMediaImage(
                     mediaImage,
                     imageProxy.getImageInfo().getRotationDegrees()
             );
+
+            DisplayMetrics displaymetrics = new DisplayMetrics();
+            activity.getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+
             scanner.process(inputImage).addOnSuccessListener(barcodes -> {
-                for (Barcode barcode : barcodes) {
-                    Log.i(TAG, "decode: " + barcode.getRawValue());
-                }
-                if (barcodes.isEmpty()) Log.i(TAG, "decode: []");
-                binding.barcodeOverlay.drawRectangles(barcodes);
                 imageProxy.close();
-            }).addOnFailureListener(e -> {
-                Log.e(TAG, "onPreview: " + e);
-                imageProxy.close();
-            });
+                //binding.barcodeOverlay.drawRectangles(barcodes, inputImage, binding.previewView);
+                if(barcodes.isEmpty()) return;
+
+                new VibratorUtil(activity).tick();
+                imageAnalysis.clearAnalyzer();
+                NavBackStackEntry backStackEntry = findNavController().getPreviousBackStackEntry();
+                assert backStackEntry != null;
+                backStackEntry.getSavedStateHandle().set(
+                        Constants.ARGUMENT.BARCODE,
+                        barcodes.get(0).getRawValue()
+                );
+                activity.navigateUp();
+            }).addOnFailureListener(e -> imageProxy.close());
         });
 
         camera = cameraProvider.bindToLifecycle(
@@ -162,7 +171,14 @@ public class ScanInputFragment extends BaseFragment
                 imageAnalysis,
                 preview
         );
-        camera.getCameraControl().enableTorch(isTorchOn);
+        camera.getCameraInfo().getTorchState().observe(getViewLifecycleOwner(), state -> {
+            MenuItem menuItem = activity.getBottomMenu().findItem(R.id.action_toggle_flash);
+            if(menuItem == null) return;
+            menuItem.setIcon(state == TorchState.ON
+                    ? R.drawable.ic_round_flash_on_to_off
+                    : R.drawable.ic_round_flash_off_to_on);
+            if(menuItem.getIcon() instanceof Animatable) ((Animatable) menuItem.getIcon()).start();
+        });
     }
 
 
@@ -173,24 +189,24 @@ public class ScanInputFragment extends BaseFragment
 
         if(!hasFlash()) menuItemTorch.setVisible(false);
         if(hasFlash()) menuItemTorch.setOnMenuItemClickListener(item -> {
-            switchTorch(item);
+            toggleTorch();
             return true;
         });
     }
 
-    private void switchTorch(MenuItem menuItem) {
+    private void toggleTorch() {
         if(camera == null) return;
-        if(isTorchOn) {
-            camera.getCameraControl().enableTorch(false);
-            menuItem.setIcon(R.drawable.ic_round_flash_off_to_on);
-            if(menuItem.getIcon() instanceof Animatable) ((Animatable) menuItem.getIcon()).start();
-            isTorchOn = false;
-        } else {
-            camera.getCameraControl().enableTorch(true);
-            menuItem.setIcon(R.drawable.ic_round_flash_on_to_off);
-            if(menuItem.getIcon() instanceof Animatable) ((Animatable) menuItem.getIcon()).start();
-            isTorchOn = true;
-        }
+        if(camera.getCameraInfo().getTorchState().getValue() == null) return;
+        int state = camera.getCameraInfo().getTorchState().getValue();
+        setTorch(state == TorchState.OFF);
+    }
+
+    private void setTorch(boolean enabled) {
+        if(camera == null) return;
+        if(camera.getCameraInfo().getTorchState().getValue() == null) return;
+        int state = camera.getCameraInfo().getTorchState().getValue();
+        if(enabled && state == TorchState.ON || !enabled && state == TorchState.OFF) return;
+        camera.getCameraControl().enableTorch(enabled);
     }
 
     private boolean hasFlash() {
@@ -200,49 +216,19 @@ public class ScanInputFragment extends BaseFragment
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        resumeScan();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        pauseScan();
-    }
-
-    @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        //return barcodeScannerView.onKeyDown(keyCode, event) || super.onKeyDown(keyCode, event);
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_FOCUS:
+            case KeyEvent.KEYCODE_CAMERA:
+                // Handle these events so they don't launch the Camera app
+                return true;
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+                setTorch(false);
+                return true;
+            case KeyEvent.KEYCODE_VOLUME_UP:
+                setTorch(true);
+                return true;
+        }
         return super.onKeyDown(keyCode, event);
-    }
-
-    @Override
-    public void onDestroy() {
-        //barcodeScannerView.setTorchOff();
-        //capture.onDestroy();
-        super.onDestroy();
-    }
-
-    @Override
-    public void onBarcodeResult(BarcodeResult result) {
-        if(result.getText().isEmpty()) resumeScan();
-        //barcodeRipple.pauseAnimation();
-        NavBackStackEntry backStackEntry = findNavController().getPreviousBackStackEntry();
-        assert backStackEntry != null;
-        backStackEntry.getSavedStateHandle().set(Constants.ARGUMENT.BARCODE, result.getText());
-        activity.navigateUp();
-    }
-
-    @Override
-    public void pauseScan() {
-        //barcodeRipple.pauseAnimation();
-        //capture.onPause();
-    }
-
-    @Override
-    public void resumeScan() {
-        //barcodeRipple.resumeAnimation();
-        //capture.onResume();
     }
 }
