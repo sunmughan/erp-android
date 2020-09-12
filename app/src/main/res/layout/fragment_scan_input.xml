@@ -74,11 +74,23 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <xyz.zedler.patrick.grocy.barcode.DecoratedBarcodeView
-        android:id="@+id/barcode_scan_input"
-        android:layout_width="match_parent"
+    <FrameLayout
+        android:id="@+id/previewViewContainer"
         android:layout_height="match_parent"
+        android:layout_width="match_parent"
         android:layout_marginTop="?android:actionBarSize"
-        app:zxing_scanner_layout="@layout/partial_scanner"/>
+        android:layout_marginBottom="?android:actionBarSize">
+
+        <androidx.camera.view.PreviewView
+            android:id="@+id/previewView"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"/>
+
+        <xyz.zedler.patrick.grocy.view.BarcodeOverlay
+            android:id="@+id/barcodeOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+    </FrameLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -1,9 +1,13 @@
 package xyz.zedler.patrick.grocy.fragment;
 
+import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Animatable;
+import android.media.Image;
 import android.os.Bundle;
+import android.util.Log;
+import android.util.Size;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -12,18 +16,30 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.camera.core.Camera;
+import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ImageAnalysis;
+import androidx.camera.core.Preview;
+import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.core.content.ContextCompat;
 import androidx.navigation.NavBackStackEntry;
 import androidx.preference.PreferenceManager;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.mlkit.vision.barcode.Barcode;
+import com.google.mlkit.vision.barcode.BarcodeScanner;
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions;
+import com.google.mlkit.vision.barcode.BarcodeScanning;
+import com.google.mlkit.vision.common.InputImage;
 import com.journeyapps.barcodescanner.BarcodeResult;
-import com.journeyapps.barcodescanner.camera.CameraSettings;
+
+import java.util.concurrent.ExecutionException;
 
 import xyz.zedler.patrick.grocy.R;
 import xyz.zedler.patrick.grocy.activity.MainActivity;
 import xyz.zedler.patrick.grocy.databinding.FragmentScanInputBinding;
 import xyz.zedler.patrick.grocy.scan.ScanInputCaptureManager;
 import xyz.zedler.patrick.grocy.util.Constants;
-import xyz.zedler.patrick.grocy.view.BarcodeRipple;
 
 public class ScanInputFragment extends BaseFragment
         implements ScanInputCaptureManager.BarcodeListener {
@@ -32,9 +48,8 @@ public class ScanInputFragment extends BaseFragment
 
     private MainActivity activity;
     private FragmentScanInputBinding binding;
-    private ScanInputCaptureManager capture;
-    private BarcodeRipple barcodeRipple;
-    private xyz.zedler.patrick.grocy.barcode.DecoratedBarcodeView barcodeScannerView;
+    private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
+    private Camera camera;
 
     private boolean isTorchOn;
 
@@ -66,24 +81,21 @@ public class ScanInputFragment extends BaseFragment
 
         binding.frameBack.setOnClickListener(v -> activity.onBackPressed());
 
-        barcodeRipple = view.findViewById(R.id.ripple_scan);
+        cameraProviderFuture = ProcessCameraProvider.getInstance(activity);
+        cameraProviderFuture.addListener(() -> {
+            try {
+                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+                bindPreview(cameraProvider);
+            } catch (ExecutionException | InterruptedException ignored) {}
+        }, ContextCompat.getMainExecutor(activity));
 
-        barcodeScannerView = binding.barcodeScanInput;
-        barcodeScannerView.setTorchOff();
         isTorchOn = false;
-        CameraSettings cameraSettings = new CameraSettings();
-        cameraSettings.setRequestedCameraId(
-                sharedPrefs.getBoolean(Constants.PREF.USE_FRONT_CAM, false) ? 1 : 0
-        );
-        barcodeScannerView.getBarcodeView().setCameraSettings(cameraSettings);
 
         // UPDATE UI
         updateUI((getArguments() == null
                 || getArguments().getBoolean(Constants.ARGUMENT.ANIMATED, true))
                 && savedInstanceState == null);
 
-        capture = new ScanInputCaptureManager(activity, barcodeScannerView, this);
-        capture.decode();
     }
 
     private void updateUI(boolean animated) {
@@ -97,6 +109,63 @@ public class ScanInputFragment extends BaseFragment
         );
     }
 
+    void bindPreview(@NonNull ProcessCameraProvider cameraProvider) {
+        Preview preview = new Preview.Builder()
+                .build();
+
+        CameraSelector cameraSelector = new CameraSelector.Builder()
+                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                .build();
+
+        preview.setSurfaceProvider(binding.previewView.createSurfaceProvider());
+
+        ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
+                .setTargetResolution(new Size(1280, 720))
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build();
+
+        BarcodeScannerOptions options =
+                new BarcodeScannerOptions.Builder()
+                        .setBarcodeFormats(
+                                Barcode.FORMAT_EAN_13,
+                                Barcode.FORMAT_EAN_8)
+                        .build();
+        BarcodeScanner scanner = BarcodeScanning.getClient(options);
+
+        imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(activity), imageProxy -> {
+            @SuppressLint("UnsafeExperimentalUsageError")
+            Image mediaImage = imageProxy.getImage();
+            if (mediaImage == null) {
+                imageProxy.close();
+                return;
+            }
+            InputImage inputImage = InputImage.fromMediaImage(
+                    mediaImage,
+                    imageProxy.getImageInfo().getRotationDegrees()
+            );
+            scanner.process(inputImage).addOnSuccessListener(barcodes -> {
+                for (Barcode barcode : barcodes) {
+                    Log.i(TAG, "decode: " + barcode.getRawValue());
+                }
+                if (barcodes.isEmpty()) Log.i(TAG, "decode: []");
+                binding.barcodeOverlay.drawRectangles(barcodes);
+                imageProxy.close();
+            }).addOnFailureListener(e -> {
+                Log.e(TAG, "onPreview: " + e);
+                imageProxy.close();
+            });
+        });
+
+        camera = cameraProvider.bindToLifecycle(
+                getViewLifecycleOwner(),
+                cameraSelector,
+                imageAnalysis,
+                preview
+        );
+        camera.getCameraControl().enableTorch(isTorchOn);
+    }
+
+
     public void setUpBottomMenu() {
         MenuItem menuItemTorch;
         menuItemTorch = activity.getBottomMenu().findItem(R.id.action_toggle_flash);
@@ -104,21 +173,20 @@ public class ScanInputFragment extends BaseFragment
 
         if(!hasFlash()) menuItemTorch.setVisible(false);
         if(hasFlash()) menuItemTorch.setOnMenuItemClickListener(item -> {
-            switchTorch();
+            switchTorch(item);
             return true;
         });
     }
 
-    private void switchTorch() {
-        MenuItem menuItem = activity.getBottomMenu().findItem(R.id.action_toggle_flash);
-        if(menuItem == null) return;
+    private void switchTorch(MenuItem menuItem) {
+        if(camera == null) return;
         if(isTorchOn) {
-            barcodeScannerView.setTorchOff();
+            camera.getCameraControl().enableTorch(false);
             menuItem.setIcon(R.drawable.ic_round_flash_off_to_on);
             if(menuItem.getIcon() instanceof Animatable) ((Animatable) menuItem.getIcon()).start();
             isTorchOn = false;
         } else {
-            barcodeScannerView.setTorchOn();
+            camera.getCameraControl().enableTorch(true);
             menuItem.setIcon(R.drawable.ic_round_flash_on_to_off);
             if(menuItem.getIcon() instanceof Animatable) ((Animatable) menuItem.getIcon()).start();
             isTorchOn = true;
@@ -145,13 +213,14 @@ public class ScanInputFragment extends BaseFragment
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        return barcodeScannerView.onKeyDown(keyCode, event) || super.onKeyDown(keyCode, event);
+        //return barcodeScannerView.onKeyDown(keyCode, event) || super.onKeyDown(keyCode, event);
+        return super.onKeyDown(keyCode, event);
     }
 
     @Override
     public void onDestroy() {
-        barcodeScannerView.setTorchOff();
-        capture.onDestroy();
+        //barcodeScannerView.setTorchOff();
+        //capture.onDestroy();
         super.onDestroy();
     }
 
@@ -168,12 +237,12 @@ public class ScanInputFragment extends BaseFragment
     @Override
     public void pauseScan() {
         //barcodeRipple.pauseAnimation();
-        capture.onPause();
+        //capture.onPause();
     }
 
     @Override
     public void resumeScan() {
         //barcodeRipple.resumeAnimation();
-        capture.onResume();
+        //capture.onResume();
     }
 }
