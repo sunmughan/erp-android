@@ -38,6 +38,7 @@ import xyz.zedler.patrick.grocy.R;
 import xyz.zedler.patrick.grocy.activity.MainActivity;
 import xyz.zedler.patrick.grocy.databinding.FragmentScanInputBinding;
 import xyz.zedler.patrick.grocy.util.Constants;
+import xyz.zedler.patrick.grocy.util.VibratorUtil;
 
 public class ScanInputFragment extends BaseFragment {
 
@@ -46,7 +47,6 @@ public class ScanInputFragment extends BaseFragment {
     private MainActivity activity;
     private FragmentScanInputBinding binding;
     private SharedPreferences sharedPrefs;
-    private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private Camera camera;
 
     @Override
@@ -78,7 +78,8 @@ public class ScanInputFragment extends BaseFragment {
 
         binding.previewView.setScaleType(PreviewView.ScaleType.FILL_START);
 
-        cameraProviderFuture = ProcessCameraProvider.getInstance(activity);
+        ListenableFuture<ProcessCameraProvider> cameraProviderFuture
+                = ProcessCameraProvider.getInstance(activity);
         cameraProviderFuture.addListener(() -> {
             try {
                 ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
@@ -90,7 +91,6 @@ public class ScanInputFragment extends BaseFragment {
         updateUI((getArguments() == null
                 || getArguments().getBoolean(Constants.ARGUMENT.ANIMATED, true))
                 && savedInstanceState == null);
-
     }
 
     private void updateUI(boolean animated) {
@@ -147,17 +147,16 @@ public class ScanInputFragment extends BaseFragment {
                 imageProxy.close();
                 if(barcodes.isEmpty()) return;
 
-                binding.barcodeOverlay.drawRectangles(barcodes, inputImage, binding.previewView);
-
-                /*new VibratorUtil(activity).tick();
-                imageAnalysis.clearAnalyzer();
-                NavBackStackEntry backStackEntry = findNavController().getPreviousBackStackEntry();
-                assert backStackEntry != null;
-                backStackEntry.getSavedStateHandle().set(
-                        Constants.ARGUMENT.BARCODE,
-                        barcodes.get(0).getRawValue()
+                binding.barcodeOverlay.drawRectangle(
+                        barcodes.get(0),
+                        inputImage,
+                        binding.previewView
                 );
-                activity.navigateUp();*/
+
+                new VibratorUtil(activity).tick();
+                imageAnalysis.clearAnalyzer();
+                setForPreviousFragment(Constants.ARGUMENT.BARCODE, barcodes.get(0).getRawValue());
+                activity.navigateUp();
             }).addOnFailureListener(e -> imageProxy.close());
         });
 

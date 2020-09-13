@@ -39,6 +39,7 @@ import com.google.mlkit.vision.barcode.Barcode;
 import com.google.mlkit.vision.common.InputImage;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import xyz.zedler.patrick.grocy.R;
@@ -107,6 +108,10 @@ public class BarcodeOverlay extends View {
             quadranglePaths.add(path);
         }
         invalidate();
+    }
+
+    public void drawRectangle(Barcode barcode, InputImage inputImage, PreviewView previewView) {
+        drawRectangles(Collections.singletonList(barcode), inputImage, previewView);
     }
 
     @SuppressLint("RestrictedApi")
