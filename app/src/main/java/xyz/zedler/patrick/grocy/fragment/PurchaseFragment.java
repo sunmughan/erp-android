@@ -137,6 +137,7 @@ public class PurchaseFragment extends BaseFragment {
         );
         binding.swipePurchase.setOnRefreshListener(() -> {
             binding.swipePurchase.setRefreshing(false);
+            viewModel.getErrorFullscreenLive().setValue(null);
             viewModel.refresh(args);
         });
 
