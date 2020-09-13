@@ -23,7 +23,6 @@ import androidx.camera.core.TorchState;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
-import androidx.navigation.NavBackStackEntry;
 import androidx.preference.PreferenceManager;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -39,7 +38,6 @@ import xyz.zedler.patrick.grocy.R;
 import xyz.zedler.patrick.grocy.activity.MainActivity;
 import xyz.zedler.patrick.grocy.databinding.FragmentScanInputBinding;
 import xyz.zedler.patrick.grocy.util.Constants;
-import xyz.zedler.patrick.grocy.util.VibratorUtil;
 
 public class ScanInputFragment extends BaseFragment {
 
@@ -78,7 +76,7 @@ public class ScanInputFragment extends BaseFragment {
 
         binding.frameBack.setOnClickListener(v -> activity.onBackPressed());
 
-        binding.previewView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
+        binding.previewView.setScaleType(PreviewView.ScaleType.FILL_START);
 
         cameraProviderFuture = ProcessCameraProvider.getInstance(activity);
         cameraProviderFuture.addListener(() -> {
@@ -147,10 +145,11 @@ public class ScanInputFragment extends BaseFragment {
 
             scanner.process(inputImage).addOnSuccessListener(barcodes -> {
                 imageProxy.close();
-                //binding.barcodeOverlay.drawRectangles(barcodes, inputImage, binding.previewView);
                 if(barcodes.isEmpty()) return;
 
-                new VibratorUtil(activity).tick();
+                binding.barcodeOverlay.drawRectangles(barcodes, inputImage, binding.previewView);
+
+                /*new VibratorUtil(activity).tick();
                 imageAnalysis.clearAnalyzer();
                 NavBackStackEntry backStackEntry = findNavController().getPreviousBackStackEntry();
                 assert backStackEntry != null;
@@ -158,7 +157,7 @@ public class ScanInputFragment extends BaseFragment {
                         Constants.ARGUMENT.BARCODE,
                         barcodes.get(0).getRawValue()
                 );
-                activity.navigateUp();
+                activity.navigateUp();*/
             }).addOnFailureListener(e -> imageProxy.close());
         });
 
