@@ -110,8 +110,7 @@ public class MissingBatchItemsFragment extends BaseFragment
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         if(isHidden()) return;
 
-        activity = (MainActivity) getActivity();
-        assert activity != null;
+        activity = (MainActivity) requireActivity();
 
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(activity);
         debug = sharedPrefs.getBoolean(Constants.PREF.DEBUG, false);
@@ -551,11 +550,7 @@ public class MissingBatchItemsFragment extends BaseFragment
         MenuItem menuItemScan;
         menuItemScan = activity.getBottomMenu().findItem(R.id.action_scan);
         menuItemScan.setOnMenuItemClickListener(item -> {
-            /*activity.dismissFragments();
-            Intent intent = new Intent(activity, ScanBatchActivity.class);
-            intent.putExtra(Constants.ARGUMENT.TYPE, Constants.ACTION.PURCHASE);
-            intent.putExtra(Constants.ARGUMENT.BUNDLE, getArguments());
-            activity.startActivityForResult(intent, Constants.REQUEST.SCAN_BATCH);*/
+            activity.navigateUp();
             return true;
         });
     }

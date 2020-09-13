@@ -67,10 +67,7 @@ public class ScanInputFragment extends BaseFragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        activity = (MainActivity) getActivity();
-        assert activity != null;
+        activity = (MainActivity) requireActivity();
 
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(activity);
 

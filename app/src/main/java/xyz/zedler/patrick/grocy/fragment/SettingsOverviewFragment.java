@@ -1,4 +1,4 @@
-package xyz.zedler.patrick.grocy.fragment.bottomSheetDialog;
+package xyz.zedler.patrick.grocy.fragment;
 
 /*
     This file is part of Grocy Android.
@@ -19,30 +19,25 @@ package xyz.zedler.patrick.grocy.fragment.bottomSheetDialog;
     Copyright 2020 by Patrick Zedler & Dominic Zedler
 */
 
-import android.app.Dialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-import com.google.android.material.bottomsheet.BottomSheetDialog;
-
-import xyz.zedler.patrick.grocy.R;
 import xyz.zedler.patrick.grocy.activity.MainActivity;
+import xyz.zedler.patrick.grocy.databinding.FragmentSettingsBinding;
+import xyz.zedler.patrick.grocy.util.ClickUtil;
 
-public class ExitMissingBatchBottomSheet extends CustomBottomSheet {
+public class SettingsOverviewFragment extends BaseFragment {
 
-    private final static String TAG = ExitMissingBatchBottomSheet.class.getSimpleName();
+    private final static String TAG = SettingsOverviewFragment.class.getSimpleName();
 
+    private FragmentSettingsBinding binding;
     private MainActivity activity;
-
-    @NonNull
-    @Override
-    public Dialog onCreateDialog(Bundle savedInstanceState) {
-        return new BottomSheetDialog(requireContext(), R.style.Theme_Grocy_BottomSheetDialog);
-    }
+    private final ClickUtil clickUtil = new ClickUtil();
 
     @Override
     public View onCreateView(
@@ -50,27 +45,26 @@ public class ExitMissingBatchBottomSheet extends CustomBottomSheet {
             ViewGroup container,
             Bundle savedInstanceState
     ) {
-        View view = inflater.inflate(
-                R.layout.fragment_bottomsheet_exit_missing_batch, container, false
-        );
-
-        activity = (MainActivity) getActivity();
-        assert activity != null;
-
-        view.findViewById(R.id.button_exit_missing_batch_open).setOnClickListener(v -> {
-            dismiss();
-        });
-
-        view.findViewById(R.id.button_exit_missing_batch_discard).setOnClickListener(v -> {
-            dismiss();
-        });
-
-        return view;
+        binding = FragmentSettingsBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
-    @NonNull
     @Override
-    public String toString() {
-        return TAG;
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        activity = (MainActivity) requireActivity();
+
+        //binding.frameAboutBack.setOnClickListener(v -> activity.navigateUp());
+        binding.frameAboutBack.setOnClickListener(v -> goTo(SettingsFragment.CATEGORY_SERVER));
+    }
+
+    private void goTo(int category) {
+        navigate(SettingsOverviewFragmentDirections
+                .actionSettingsOverviewFragmentToSettingsFragment(category));
     }
 }

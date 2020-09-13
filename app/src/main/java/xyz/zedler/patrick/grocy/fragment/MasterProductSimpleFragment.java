@@ -168,8 +168,7 @@ public class MasterProductSimpleFragment extends BaseFragment {
     public void onViewCreated(@Nullable View view, @Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        activity = (MainActivity) getActivity();
-        assert activity != null && getArguments() != null;
+        activity = (MainActivity) requireActivity();
 
         // PREFERENCES
 
@@ -233,10 +232,10 @@ public class MasterProductSimpleFragment extends BaseFragment {
                 R.id.text_input_master_product_simple_parent_product
         );
         textInputParentProduct.setErrorIconDrawable(null);
-        /*textInputParentProduct.setEndIconOnClickListener(v -> startActivityForResult(
-                new Intent(activity, ScanInputActivity.class),
-                Constants.REQUEST.SCAN_PARENT_PRODUCT
-        ));*/
+        textInputParentProduct.setEndIconOnClickListener(
+                v -> navigate(MasterProductSimpleFragmentDirections
+                        .actionMasterProductSimpleFragmentToScanInputFragment())
+        ); // TODO: Barcode result can also be a barcode from below
         autoCompleteTextViewParentProduct =
                 (MaterialAutoCompleteTextView) textInputParentProduct.getEditText();
         assert autoCompleteTextViewParentProduct != null;
@@ -285,7 +284,7 @@ public class MasterProductSimpleFragment extends BaseFragment {
         textInputBarcodes.setEndIconOnClickListener(
                 v -> navigate(MasterProductSimpleFragmentDirections
                         .actionMasterProductSimpleFragmentToScanInputFragment())
-        );
+        ); // TODO: Ambiguous result (see above TODO)
         editTextBarcodes = textInputBarcodes.getEditText();
         assert editTextBarcodes != null;
         editTextBarcodes.setOnEditorActionListener((v, actionId, event) -> {
@@ -546,7 +545,7 @@ public class MasterProductSimpleFragment extends BaseFragment {
         // STARTUP BUNDLE
 
         MasterProductSimpleFragmentArgs args = MasterProductSimpleFragmentArgs
-                .fromBundle(getArguments());
+                .fromBundle(requireArguments());
         intendedAction = args.getAction();
 
         if(intendedAction.equals(Constants.ACTION.EDIT)) {
@@ -570,8 +569,7 @@ public class MasterProductSimpleFragment extends BaseFragment {
         }
 
         // UPDATE UI
-        updateUI((getArguments() == null
-                || getArguments().getBoolean(Constants.ARGUMENT.ANIMATED, true))
+        updateUI(requireArguments().getBoolean(Constants.ARGUMENT.ANIMATED, true)
                 && savedInstanceState == null);
     }
 

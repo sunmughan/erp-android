@@ -55,7 +55,6 @@ import java.util.List;
 
 import xyz.zedler.patrick.grocy.R;
 import xyz.zedler.patrick.grocy.activity.MainActivity;
-import xyz.zedler.patrick.grocy.activity.ShoppingActivity;
 import xyz.zedler.patrick.grocy.adapter.ShoppingListItemAdapter;
 import xyz.zedler.patrick.grocy.adapter.StockPlaceholderAdapter;
 import xyz.zedler.patrick.grocy.animator.ItemAnimator;
@@ -164,8 +163,7 @@ public class ShoppingListFragment extends BaseFragment implements
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         if(isHidden()) return;
 
-        activity = (MainActivity) getActivity();
-        assert activity != null;
+        activity = (MainActivity) requireActivity();
 
         // PREFERENCES
 
@@ -981,10 +979,7 @@ public class ShoppingListFragment extends BaseFragment implements
         MenuItem shoppingMode = activity.getBottomMenu().findItem(R.id.action_shopping_mode);
         if(shoppingMode != null) {
             shoppingMode.setOnMenuItemClickListener(item -> {
-                startActivityForResult(
-                        new Intent(activity, ShoppingActivity.class),
-                        Constants.REQUEST.SHOPPING_MODE
-                );
+                // TODO: Navigate to ShoppingModeFragment
                 return true;
             });
         }
