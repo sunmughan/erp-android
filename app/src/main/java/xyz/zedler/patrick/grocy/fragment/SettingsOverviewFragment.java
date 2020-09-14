@@ -19,6 +19,7 @@ package xyz.zedler.patrick.grocy.fragment;
     Copyright 2020 by Patrick Zedler & Dominic Zedler
 */
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,10 +27,13 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.preference.PreferenceManager;
 
+import xyz.zedler.patrick.grocy.R;
 import xyz.zedler.patrick.grocy.activity.MainActivity;
 import xyz.zedler.patrick.grocy.databinding.FragmentSettingsBinding;
-import xyz.zedler.patrick.grocy.util.ClickUtil;
+import xyz.zedler.patrick.grocy.util.Constants;
+import xyz.zedler.patrick.grocy.view.SettingCategory;
 
 public class SettingsOverviewFragment extends BaseFragment {
 
@@ -37,7 +41,7 @@ public class SettingsOverviewFragment extends BaseFragment {
 
     private FragmentSettingsBinding binding;
     private MainActivity activity;
-    private final ClickUtil clickUtil = new ClickUtil();
+    private SharedPreferences sharedPrefs;
 
     @Override
     public View onCreateView(
@@ -46,6 +50,9 @@ public class SettingsOverviewFragment extends BaseFragment {
             Bundle savedInstanceState
     ) {
         binding = FragmentSettingsBinding.inflate(inflater, container, false);
+        activity = (MainActivity) requireActivity();
+        sharedPrefs = PreferenceManager.getDefaultSharedPreferences(activity);
+        addCategories();
         return binding.getRoot();
     }
 
@@ -55,16 +62,99 @@ public class SettingsOverviewFragment extends BaseFragment {
         binding = null;
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        activity = (MainActivity) requireActivity();
-
-        //binding.frameAboutBack.setOnClickListener(v -> activity.navigateUp());
-        binding.frameAboutBack.setOnClickListener(v -> goTo(SettingsFragment.CATEGORY_SERVER));
+    private void addCategories() {
+        binding.linearBody.addView(new SettingCategory(
+                requireContext(),
+                R.string.category_server,
+                sharedPrefs.getString(Constants.PREF.SERVER_URL, getString(R.string.error_unknown)),
+                R.drawable.ic_round_settings_system,
+                () -> goTo(Constants.SETTINGS.SERVER.class.getSimpleName())
+        ));
+        binding.linearBody.addView(new SettingCategory(
+                requireContext(),
+                R.string.category_appearance,
+                R.drawable.ic_round_dark_mode_on_anim,
+                () -> goTo(Constants.SETTINGS.APPEARANCE.class.getSimpleName())
+        ));
+        binding.linearBody.addView(new SettingCategory(
+                requireContext(),
+                R.string.category_barcode_scanner,
+                R.drawable.ic_round_barcode_scan,
+                () -> goTo(Constants.SETTINGS.SCANNER.class.getSimpleName())
+        ));
+        if(isFeatureEnabled(Constants.PREF.FEATURE_SHOPPING_LIST)
+                || isFeatureEnabled(Constants.PREF.FEATURE_STOCK_BBD_TRACKING)
+        ) {
+            binding.linearBody.addView(new SettingCategory(
+                    requireContext(),
+                    R.string.title_stock_overview,
+                    R.drawable.ic_round_view_list, // TODO: Shelf icon would be good
+                    () -> goTo(Constants.SETTINGS.STOCK.class.getSimpleName())
+            ));
+        }
+        if(isFeatureEnabled(Constants.PREF.FEATURE_SHOPPING_LIST)) {
+            binding.linearBody.addView(new SettingCategory(
+                    requireContext(),
+                    R.string.title_shopping_mode,
+                    R.drawable.ic_round_storefront,
+                    () -> goTo(Constants.SETTINGS.SHOPPING_MODE.class.getSimpleName())
+            ));
+        }
+        binding.linearBody.addView(new SettingCategory(
+                requireContext(),
+                R.string.category_purchase_consume,
+                R.drawable.ic_round_pasta,
+                () -> goTo(Constants.SETTINGS.PURCHASE_CONSUME.class.getSimpleName())
+        ));
+        binding.linearBody.addView(new SettingCategory(
+                requireContext(),
+                R.string.category_presets,
+                R.drawable.ic_round_widgets,
+                () -> goTo(Constants.SETTINGS.PRESETS.class.getSimpleName())
+        ));
+        binding.linearBody.addView(new SettingCategory(
+                requireContext(),
+                R.string.category_debugging,
+                R.drawable.ic_round_bug_report_anim,
+                () -> goTo(Constants.SETTINGS.DEBUGGING.class.getSimpleName())
+        ));
+        binding.linearBody.addView(new SettingCategory(
+                requireContext(),
+                R.string.title_about_this_app,
+                R.drawable.ic_round_info_outline_anim_menu,
+                () -> navigate(SettingsOverviewFragmentDirections
+                        .actionSettingsOverviewFragmentToAboutFragment())
+        ));
     }
 
-    private void goTo(int category) {
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        binding.frameBack.setOnClickListener(v -> activity.navigateUp());
+
+        boolean animated = true;
+        if(getFromLastFragmentNow(Constants.ARGUMENT.ANIMATED) != null) {
+            animated = false;
+        }
+
+        activity.showHideDemoIndicator(this, animated);
+        activity.updateBottomAppBar(
+                Constants.FAB.POSITION.GONE,
+                R.menu.menu_empty,
+                animated,
+                () -> {}
+        );
+        activity.getScrollBehavior().setUpScroll(binding.scroll);
+        activity.getScrollBehavior().setHideOnScroll(true);
+        activity.binding.fabMain.hide();
+    }
+
+    private void goTo(String category) {
         navigate(SettingsOverviewFragmentDirections
                 .actionSettingsOverviewFragmentToSettingsFragment(category));
+    }
+
+    private boolean isFeatureEnabled(String pref) {
+        if(pref == null) return false;
+        return sharedPrefs.getBoolean(pref, true);
     }
 }

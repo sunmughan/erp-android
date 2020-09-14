@@ -186,7 +186,7 @@
     <string name="title_shopping_list">Liste de courses</string>
     <string name="title_feedback">Retour d\'information</string>
     <string name="title_settings">Paramètres</string>
-    <string name="title_about">À propos</string>
+    <string name="title_about_this_app">À propos</string>
     <string name="title_info">Information</string>
     <string name="title_help">Aide</string>
     <string name="title_logs">Journaux</string>
@@ -367,7 +367,7 @@
     <string name="category_purchase_consume">Achat &amp; consommer</string>
     <string name="category_server">Serveur</string>
     <string name="category_debugging">Débogage</string>
-    <string name="category_presets">Préréglages pour de nouveaux produits</string>
+    <string name="category_presets_new_products">Préréglages pour de nouveaux produits</string>
 
     <string name="hint_server">URL du serveur</string>
     <string name="hint_key">Clé API valide</string>

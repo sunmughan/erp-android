@@ -190,7 +190,7 @@
     <string name="title_shopping_list">רשימת קניות</string>
     <string name="title_feedback">משוב</string>
     <string name="title_settings">הגדרות</string>
-    <string name="title_about">על אודות</string>
+    <string name="title_about_this_app">על אודות</string>
     <string name="title_info">פרטים</string>
     <string name="title_help">עזרה</string>
     <string name="title_logs">יומנים</string>
@@ -378,7 +378,7 @@
     <string name="category_purchase_consume">רכישה וצריכה</string>
     <string name="category_server">שרת</string>
     <string name="category_debugging">ניפוי שגיאות</string>
-    <string name="category_presets">ערכות למוצרים חדשים</string>
+    <string name="category_presets_new_products">ערכות למוצרים חדשים</string>
 
     <string name="hint_server">כתובת שרת</string>
     <string name="hint_key">מפתח API תקני</string>

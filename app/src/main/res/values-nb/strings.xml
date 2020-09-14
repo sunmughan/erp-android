@@ -190,7 +190,7 @@
     <string name="title_shopping_list">Handleliste</string>
     <string name="title_feedback">Tilbakemelding</string>
     <string name="title_settings">Innstillinger</string>
-    <string name="title_about">Om</string>
+    <string name="title_about_this_app">Om</string>
     <string name="title_info">Informasjon</string>
     <string name="title_help">Hjelp</string>
     <string name="title_logs">Logger</string>
@@ -378,7 +378,7 @@
     <string name="category_purchase_consume">Kjøp &amp; forbruk</string>
     <string name="category_server">Server</string>
     <string name="category_debugging">Feilsøking</string>
-    <string name="category_presets">Forhåndsinnstillinger for nye produkter</string>
+    <string name="category_presets_new_products">Forhåndsinnstillinger for nye produkter</string>
 
     <string name="hint_server">Server URL</string>
     <string name="hint_key">Gyldig API-nøkkel</string>
