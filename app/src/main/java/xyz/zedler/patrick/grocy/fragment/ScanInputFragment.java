@@ -3,6 +3,11 @@ package xyz.zedler.patrick.grocy.fragment;
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
 import android.graphics.drawable.Animatable;
 import android.media.Image;
 import android.os.Bundle;
@@ -32,13 +37,14 @@ import com.google.mlkit.vision.barcode.BarcodeScannerOptions;
 import com.google.mlkit.vision.barcode.BarcodeScanning;
 import com.google.mlkit.vision.common.InputImage;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutionException;
 
 import xyz.zedler.patrick.grocy.R;
 import xyz.zedler.patrick.grocy.activity.MainActivity;
 import xyz.zedler.patrick.grocy.databinding.FragmentScanInputBinding;
 import xyz.zedler.patrick.grocy.util.Constants;
-import xyz.zedler.patrick.grocy.util.VibratorUtil;
 
 public class ScanInputFragment extends BaseFragment {
 
@@ -73,7 +79,7 @@ public class ScanInputFragment extends BaseFragment {
 
         binding.frameBack.setOnClickListener(v -> activity.onBackPressed());
 
-        binding.previewView.setScaleType(PreviewView.ScaleType.FILL_START);
+        binding.previewView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
 
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture
                 = ProcessCameraProvider.getInstance(activity);
@@ -135,14 +141,16 @@ public class ScanInputFragment extends BaseFragment {
                 return;
             }
 
-            InputImage inputImage = InputImage.fromMediaImage(
-                    mediaImage,
+            Bitmap bitmap = toBitmap(mediaImage);
+
+            InputImage inputImage = InputImage.fromBitmap(
+                    bitmap,
                     imageProxy.getImageInfo().getRotationDegrees()
             );
 
             scanner.process(inputImage).addOnSuccessListener(barcodes -> {
                 imageProxy.close();
-                if(barcodes.isEmpty()) return;
+                if(barcodes.isEmpty() || binding == null) return;
 
                 binding.barcodeOverlay.drawRectangle(
                         barcodes.get(0),
@@ -150,10 +158,10 @@ public class ScanInputFragment extends BaseFragment {
                         binding.previewView
                 );
 
-                new VibratorUtil(activity).tick();
+                /*new VibratorUtil(activity).tick();
                 imageAnalysis.clearAnalyzer();
                 setForPreviousFragment(Constants.ARGUMENT.BARCODE, barcodes.get(0).getRawValue());
-                activity.navigateUp();
+                activity.navigateUp();*/
             }).addOnFailureListener(e -> imageProxy.close());
         });
 
@@ -173,6 +181,30 @@ public class ScanInputFragment extends BaseFragment {
         });
     }
 
+    private Bitmap toBitmap(Image image) {
+        // source: https://stackoverflow.com/a/58568495
+        Image.Plane[] planes = image.getPlanes();
+        ByteBuffer yBuffer = planes[0].getBuffer();
+        ByteBuffer uBuffer = planes[1].getBuffer();
+        ByteBuffer vBuffer = planes[2].getBuffer();
+
+        int ySize = yBuffer.remaining();
+        int uSize = uBuffer.remaining();
+        int vSize = vBuffer.remaining();
+
+        byte[] nv21 = new byte[ySize + uSize + vSize];
+        //U and V are swapped
+        yBuffer.get(nv21, 0, ySize);
+        vBuffer.get(nv21, ySize, vSize);
+        uBuffer.get(nv21, ySize + vSize, uSize);
+
+        YuvImage yuvImage = new YuvImage(nv21, ImageFormat.NV21, image.getWidth(), image.getHeight(), null);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        yuvImage.compressToJpeg(new Rect(0, 0, yuvImage.getWidth(), yuvImage.getHeight()), 75, out);
+
+        byte[] imageBytes = out.toByteArray();
+        return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+    }
 
     public void setUpBottomMenu() {
         MenuItem menuItemTorch;

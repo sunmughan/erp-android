@@ -55,10 +55,12 @@ public class BarcodeOverlay extends View {
     private InputImage inputImage;
     private PreviewView previewView;
     private ArrayList<Path> quadranglePaths;
+    private PreviewView.ScaleType scaleType;
     private int inputImageHeight;
     private int inputImageWidth;
     private int previewViewHeight;
     private int previewViewWidth;
+    private boolean portraitOrientation;
 
     public BarcodeOverlay(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -82,12 +84,16 @@ public class BarcodeOverlay extends View {
         if(inputImage.getRotationDegrees() == 90 || inputImage.getRotationDegrees() == 270) {
             inputImageHeight = inputImage.getWidth();
             inputImageWidth = inputImage.getHeight();
+            portraitOrientation = true;
         } else {
             inputImageHeight = inputImage.getHeight();
             inputImageWidth = inputImage.getWidth();
+            portraitOrientation = false;
         }
         previewViewHeight = previewView.getHeight();
         previewViewWidth = previewView.getWidth();
+
+        scaleType = previewView.getScaleType();
 
         Log.i(TAG, "drawRectangles: inputImage: " + inputImage.getHeight() + "x" + inputImage.getWidth());
         Log.i(TAG, "drawRectangles: previewView: " + previewView.getHeight() + "x" + previewView.getWidth());
@@ -139,10 +145,29 @@ public class BarcodeOverlay extends View {
     }
 
     private float calcXCoordinate(Point cornerPoint) {
-        return cornerPoint.x / (float) inputImageWidth * getCropFactor() * previewViewWidth;
+        float value;
+        if(!portraitOrientation && scaleType == PreviewView.ScaleType.FIT_CENTER) {
+            value = (-previewViewHeight * inputImageWidth) / ((float) 2 * inputImageHeight) + previewViewWidth / (float) 2;
+            return value + cornerPoint.x / (float) inputImageWidth * (previewViewWidth - 2 * value);
+        } else if(portraitOrientation && scaleType == PreviewView.ScaleType.FILL_CENTER) {
+            value = (previewViewWidth * inputImageHeight) / ((float) 2 * inputImageWidth) - previewViewHeight / (float) 2;
+            return value + cornerPoint.x / (float) inputImageWidth * (previewViewWidth - 2 * value);
+        }
+
+        return cornerPoint.x / (float) inputImageWidth * previewViewWidth;
     }
 
     private float calcYCoordinate(Point cornerPoint) {
+        float value;
+        if(portraitOrientation && scaleType == PreviewView.ScaleType.FIT_CENTER) {
+            value = (-previewViewWidth * inputImageHeight) / ((float) 2 * inputImageWidth) + previewViewHeight / (float) 2;
+            return value + cornerPoint.y / (float) inputImageHeight * (previewViewHeight - 2 * value);
+        } else if(!portraitOrientation && scaleType == PreviewView.ScaleType.FILL_CENTER) {
+            value = (previewViewHeight * inputImageWidth) / ((float) 2 * inputImageHeight) - previewViewWidth / (float) 2;
+            Log.i(TAG, "calcYCoordinate: " + value);
+            return value + cornerPoint.y / (float) inputImageHeight * (previewViewHeight - 2 * value);
+        }
+
         return cornerPoint.y / (float) inputImageHeight * previewViewHeight;
     }
 
