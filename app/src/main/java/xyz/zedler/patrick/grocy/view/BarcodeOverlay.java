@@ -26,6 +26,7 @@ import android.graphics.CornerPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -50,12 +51,14 @@ public class BarcodeOverlay extends View {
     private final static String TAG = BarcodeOverlay.class.getSimpleName();
 
     private Context context;
-    private Paint paintRect = new Paint();
+    private Paint framingPaint = new Paint();
+    private Paint barcodePaint = new Paint();
     private List<Barcode> barcodes;
     private InputImage inputImage;
     private PreviewView previewView;
     private ArrayList<Path> quadranglePaths;
     private PreviewView.ScaleType scaleType;
+    private Rect framingRect;
     private int inputImageHeight;
     private int inputImageWidth;
     private int previewViewHeight;
@@ -67,11 +70,16 @@ public class BarcodeOverlay extends View {
 
         this.context = context;
 
-        paintRect.setStyle(Paint.Style.STROKE);
-        paintRect.setColor(getColor(R.color.white));
-        paintRect.setAntiAlias(true);
-        paintRect.setStrokeWidth(UnitUtil.getDp(context, 6));
-        paintRect.setPathEffect(new CornerPathEffect(8));
+        framingPaint.setStyle(Paint.Style.FILL);
+        framingPaint.setColor(getColor(R.color.black));
+        framingPaint.setAntiAlias(false);
+        framingPaint.setAlpha(170);
+
+        barcodePaint.setStyle(Paint.Style.STROKE);
+        barcodePaint.setColor(getColor(R.color.white));
+        barcodePaint.setAntiAlias(true);
+        barcodePaint.setStrokeWidth(UnitUtil.getDp(context, 6));
+        barcodePaint.setPathEffect(new CornerPathEffect(8));
 
         quadranglePaths = new ArrayList<>();
     }
@@ -113,6 +121,18 @@ public class BarcodeOverlay extends View {
             path.close();
             quadranglePaths.add(path);
         }
+
+        Rect surfaceRect = new Rect(0, 0, previewViewWidth, previewViewHeight);
+        framingRect = calculateFramingRect(surfaceRect);
+
+        Rect frameInPreview = new Rect(framingRect);
+        frameInPreview.offset(-surfaceRect.left, -surfaceRect.top);
+
+        Rect previewFramingRect = new Rect(frameInPreview.left * previewViewWidth / surfaceRect.width(),
+                frameInPreview.top * previewViewHeight / surfaceRect.height(),
+                frameInPreview.right * previewViewWidth / surfaceRect.width(),
+                frameInPreview.bottom * previewViewHeight / surfaceRect.height());
+
         invalidate();
     }
 
@@ -125,22 +145,15 @@ public class BarcodeOverlay extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-
-        /*if(barcodes == null || inputImage == null || previewView == null) return;
-        for(Barcode barcode : barcodes) {
-            if(barcode.getCornerPoints() == null) return;
-
-            for(Point point : barcode.getCornerPoints()) {
-                canvas.drawPoint(
-                        point.x / (float) inputImageWidth * getCropFactor() * previewViewWidth,
-                        point.y / (float) inputImageHeight * previewViewHeight,
-                        paintRect
-                );
-            }
-        }*/
+        if(framingRect != null) {
+            canvas.drawRect(0, 0, getWidth(), framingRect.top, framingPaint);
+            canvas.drawRect(0, framingRect.top, framingRect.left, framingRect.bottom + 1, framingPaint);
+            canvas.drawRect(framingRect.right + 1, framingRect.top, getWidth(), framingRect.bottom + 1, framingPaint);
+            canvas.drawRect(0, framingRect.bottom + 1, getWidth(), getHeight(), framingPaint);
+        }
 
         for(Path path : quadranglePaths) {
-            canvas.drawPath(path, paintRect);
+            canvas.drawPath(path, barcodePaint);
         }
     }
 
@@ -175,6 +188,24 @@ public class BarcodeOverlay extends View {
         return ((previewViewHeight * inputImageWidth)
                 / (float) inputImageHeight)
                 / (float) previewViewWidth;
+    }
+
+    /**
+     * Calculate framing rectangle, relative to the preview frame.
+     *
+     * Note that the SurfaceView may be larger than the container.
+     *
+     * Override this for more control over the framing rect calculations.
+     *
+     * @param surface   the SurfaceView, relative to this container
+     * @return the framing rect, relative to this container
+     */
+    protected Rect calculateFramingRect(Rect surface) {
+        Rect intersection = new Rect(surface);
+        int horizontalMargin = Math.max(0, (intersection.width() - UnitUtil.getDp(getContext(), 270)) / 2);
+        int verticalMargin = Math.max(0, (intersection.height() - UnitUtil.getDp(getContext(), 270)) / 2);
+        intersection.inset(horizontalMargin, verticalMargin);
+        return intersection;
     }
 
     private int getColor(@ColorRes int color) {

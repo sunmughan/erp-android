@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/nav_graph"
-    app:startDestination="@id/stockFragment">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/purchaseFragment">
 
     <fragment
         android:id="@+id/stockFragment"
         android:name="xyz.zedler.patrick.grocy.fragment.StockFragment"
-        android:label="StockFragment" >
+        android:label="StockFragment">
         <action
             android:id="@+id/action_stockFragment_to_productOverviewBottomSheetDialogFragment"
             app:destination="@id/productOverviewBottomSheetDialogFragment" />
@@ -20,7 +21,7 @@
     <fragment
         android:id="@+id/shoppingListFragment"
         android:name="xyz.zedler.patrick.grocy.fragment.ShoppingListFragment"
-        android:label="ShoppingListFragment" >
+        android:label="ShoppingListFragment">
         <action
             android:id="@+id/action_shoppingListFragment_to_shoppingListItemEditFragment"
             app:destination="@id/shoppingListItemEditFragment"
@@ -43,16 +44,16 @@
     <fragment
         android:id="@+id/consumeFragment"
         android:name="xyz.zedler.patrick.grocy.fragment.ConsumeFragment"
-        android:label="ConsumeFragment" >
+        android:label="ConsumeFragment">
         <argument
             android:name="closeWhenFinished"
-            app:argType="boolean"
-            android:defaultValue="false" />
+            android:defaultValue="false"
+            app:argType="boolean" />
         <argument
             android:name="productName"
+            android:defaultValue="@null"
             app:argType="string"
-            app:nullable="true"
-            android:defaultValue="@null" />
+            app:nullable="true" />
         <action
             android:id="@+id/action_consumeFragment_to_inputNameBottomSheetDialogFragment"
             app:destination="@id/inputNameBottomSheetDialogFragment" />
@@ -75,23 +76,23 @@
     <fragment
         android:id="@+id/purchaseFragment"
         android:name="xyz.zedler.patrick.grocy.fragment.PurchaseFragment"
-        android:label="PurchaseFragment" >
+        android:label="PurchaseFragment">
         <argument
             android:name="closeWhenFinished"
-            app:argType="boolean"
-            android:defaultValue="false" />
+            android:defaultValue="false"
+            app:argType="boolean" />
         <argument
             android:name="productName"
+            android:defaultValue="@null"
             app:argType="string"
-            app:nullable="true"
-            android:defaultValue="@null" />
+            app:nullable="true" />
         <action
             android:id="@+id/action_purchaseFragment_to_inputNameBottomSheetDialogFragment"
             app:destination="@id/inputNameBottomSheetDialogFragment" />
         <argument
             android:name="amount"
-            app:argType="string"
             android:defaultValue="@null"
+            app:argType="string"
             app:nullable="true" />
         <action
             android:id="@+id/action_purchaseFragment_to_productOverviewBottomSheetDialogFragment"
@@ -116,13 +117,13 @@
             app:popExitAnim="@anim/slide_out_down" />
         <argument
             android:name="shoppingListItems"
+            android:defaultValue="@null"
             app:argType="xyz.zedler.patrick.grocy.model.ShoppingListItem[]"
-            app:nullable="true"
-            android:defaultValue="@null" />
+            app:nullable="true" />
         <argument
             android:name="animateStart"
-            app:argType="boolean"
-            android:defaultValue="true" />
+            android:defaultValue="true"
+            app:argType="boolean" />
     </fragment>
     <activity
         android:id="@+id/settingsActivity"
@@ -131,7 +132,7 @@
     <fragment
         android:id="@+id/masterProductsFragment"
         android:name="xyz.zedler.patrick.grocy.fragment.MasterProductsFragment"
-        android:label="MasterProductsFragment" >
+        android:label="MasterProductsFragment">
         <action
             android:id="@+id/action_masterProductsFragment_to_masterProductSimpleFragment"
             app:destination="@id/masterProductSimpleFragment"
@@ -142,7 +143,7 @@
     <fragment
         android:id="@+id/masterStoresFragment"
         android:name="xyz.zedler.patrick.grocy.fragment.MasterStoresFragment"
-        android:label="MasterStoresFragment" >
+        android:label="MasterStoresFragment">
         <action
             android:id="@+id/action_masterStoresFragment_to_masterStoreFragment"
             app:destination="@id/masterStoreFragment"
@@ -153,7 +154,7 @@
     <fragment
         android:id="@+id/masterLocationsFragment"
         android:name="xyz.zedler.patrick.grocy.fragment.MasterLocationsFragment"
-        android:label="MasterLocationsFragment" >
+        android:label="MasterLocationsFragment">
         <action
             android:id="@+id/action_masterLocationsFragment_to_masterLocationFragment"
             app:destination="@id/masterLocationFragment"
@@ -164,7 +165,7 @@
     <fragment
         android:id="@+id/masterQuantityUnitsFragment"
         android:name="xyz.zedler.patrick.grocy.fragment.MasterQuantityUnitsFragment"
-        android:label="MasterQuantityUnitsFragment" >
+        android:label="MasterQuantityUnitsFragment">
         <action
             android:id="@+id/action_masterQuantityUnitsFragment_to_masterQuantityUnitFragment"
             app:destination="@id/masterQuantityUnitFragment"
@@ -175,7 +176,7 @@
     <fragment
         android:id="@+id/masterProductGroupsFragment"
         android:name="xyz.zedler.patrick.grocy.fragment.MasterProductGroupsFragment"
-        android:label="MasterProductGroupsFragment" >
+        android:label="MasterProductGroupsFragment">
         <action
             android:id="@+id/action_masterProductGroupsFragment_to_masterProductGroupFragment"
             app:destination="@id/masterProductGroupFragment"
@@ -190,20 +191,20 @@
     <fragment
         android:id="@+id/masterProductSimpleFragment"
         android:name="xyz.zedler.patrick.grocy.fragment.MasterProductSimpleFragment"
-        android:label="MasterProductSimpleFragment" >
+        android:label="MasterProductSimpleFragment">
         <argument
             android:name="action"
             app:argType="string" />
         <argument
             android:name="product"
+            android:defaultValue="@null"
             app:argType="xyz.zedler.patrick.grocy.model.Product"
-            app:nullable="true"
-            android:defaultValue="@null" />
+            app:nullable="true" />
         <argument
             android:name="createProductObject"
+            android:defaultValue="@null"
             app:argType="xyz.zedler.patrick.grocy.model.CreateProduct"
-            app:nullable="true"
-            android:defaultValue="@null" />
+            app:nullable="true" />
         <action
             android:id="@+id/action_masterProductSimpleFragment_to_scanInputFragment"
             app:destination="@id/scanInputFragment"
@@ -230,11 +231,11 @@
     <fragment
         android:id="@+id/shoppingListItemEditFragment"
         android:name="xyz.zedler.patrick.grocy.fragment.ShoppingListItemEditFragment"
-        android:label="ShoppingListItemEditFragment" >
+        android:label="ShoppingListItemEditFragment">
         <argument
             android:name="selectedShoppingListId"
-            app:argType="integer"
-            android:defaultValue="-1" />
+            android:defaultValue="-1"
+            app:argType="integer" />
         <argument
             android:name="action"
             app:argType="string" />
@@ -243,14 +244,14 @@
             app:destination="@id/productOverviewBottomSheetDialogFragment" />
         <argument
             android:name="productName"
+            android:defaultValue="@null"
             app:argType="string"
-            app:nullable="true"
-            android:defaultValue="@null" />
+            app:nullable="true" />
         <argument
             android:name="shoppingListItem"
+            android:defaultValue="@null"
             app:argType="xyz.zedler.patrick.grocy.model.ShoppingListItem"
-            app:nullable="true"
-            android:defaultValue="@null" />
+            app:nullable="true" />
         <action
             android:id="@+id/action_shoppingListItemEditFragment_to_scanInputFragment"
             app:destination="@id/scanInputFragment"
@@ -261,7 +262,7 @@
     <dialog
         android:id="@+id/productOverviewBottomSheetDialogFragment"
         android:name="xyz.zedler.patrick.grocy.fragment.bottomSheetDialog.ProductOverviewBottomSheet"
-        android:label="ProductOverviewBottomSheetDialogFragment" >
+        android:label="ProductOverviewBottomSheetDialogFragment">
         <action
             android:id="@+id/action_productOverviewBottomSheetDialogFragment_to_masterProductSimpleFragment"
             app:destination="@id/masterProductSimpleFragment"
@@ -276,28 +277,28 @@
             app:popExitAnim="@anim/slide_out_down" />
         <argument
             android:name="productDetails"
+            android:defaultValue="@null"
             app:argType="xyz.zedler.patrick.grocy.model.ProductDetails"
-            app:nullable="true"
-            android:defaultValue="@null" />
+            app:nullable="true" />
         <argument
             android:name="stockItem"
+            android:defaultValue="@null"
             app:argType="xyz.zedler.patrick.grocy.model.StockItem"
-            app:nullable="true"
-            android:defaultValue="@null" />
+            app:nullable="true" />
         <argument
             android:name="quantityUnit"
+            android:defaultValue="@null"
             app:argType="xyz.zedler.patrick.grocy.model.QuantityUnit"
-            app:nullable="true"
-            android:defaultValue="@null" />
+            app:nullable="true" />
         <argument
             android:name="location"
+            android:defaultValue="@null"
             app:argType="xyz.zedler.patrick.grocy.model.Location"
-            app:nullable="true"
-            android:defaultValue="@null" />
+            app:nullable="true" />
         <argument
             android:name="showActions"
-            app:argType="boolean"
-            android:defaultValue="false" />
+            android:defaultValue="false"
+            app:argType="boolean" />
         <action
             android:id="@+id/action_productOverviewBottomSheetDialogFragment_to_consumeFragment"
             app:destination="@id/consumeFragment"
@@ -314,7 +315,7 @@
     <dialog
         android:id="@+id/drawerBottomSheetDialogFragment"
         android:name="xyz.zedler.patrick.grocy.fragment.bottomSheetDialog.DrawerBottomSheet"
-        android:label="DrawerBottomSheetDialogFragment" >
+        android:label="DrawerBottomSheetDialogFragment">
         <action
             android:id="@+id/action_drawerBottomSheetDialogFragment_to_shoppingListFragment"
             app:destination="@id/shoppingListFragment" />
@@ -337,11 +338,13 @@
             android:id="@+id/action_drawerBottomSheetDialogFragment_to_settingsFragment"
             app:destination="@id/settingsOverviewFragment" />
     </dialog>
-    <action android:id="@+id/action_global_drawerBottomSheetDialogFragment" app:destination="@id/drawerBottomSheetDialogFragment" />
+    <action
+        android:id="@+id/action_global_drawerBottomSheetDialogFragment"
+        app:destination="@id/drawerBottomSheetDialogFragment" />
     <dialog
         android:id="@+id/inputNameBottomSheetDialogFragment"
         android:name="xyz.zedler.patrick.grocy.fragment.bottomSheetDialog.InputNameBottomSheet"
-        android:label="InputNameBottomSheetDialogFragment" >
+        android:label="InputNameBottomSheetDialogFragment">
         <argument
             android:name="productName"
             app:argType="string" />
@@ -355,7 +358,7 @@
     <fragment
         android:id="@+id/missingBatchItemsFragment"
         android:name="xyz.zedler.patrick.grocy.fragment.MissingBatchItemsFragment"
-        android:label="MissingBatchItemsFragment" >
+        android:label="MissingBatchItemsFragment">
         <argument
             android:name="missingBatchItems"
             app:argType="xyz.zedler.patrick.grocy.model.MissingBatchItem[]" />
@@ -363,14 +366,14 @@
     <fragment
         android:id="@+id/scanBatchFragment"
         android:name="xyz.zedler.patrick.grocy.fragment.ScanBatchFragment"
-        android:label="ScanBatchFragment" >
+        android:label="ScanBatchFragment">
         <argument
             android:name="action"
             app:argType="string" />
         <argument
             android:name="startAnimated"
-            app:argType="boolean"
-            android:defaultValue="true" />
+            android:defaultValue="true"
+            app:argType="boolean" />
     </fragment>
     <fragment
         android:id="@+id/scanInputFragment"
@@ -383,7 +386,7 @@
     <fragment
         android:id="@+id/aboutFragment"
         android:name="xyz.zedler.patrick.grocy.fragment.AboutFragment"
-        android:label="AboutFragment" >
+        android:label="AboutFragment">
         <action
             android:id="@+id/action_aboutFragment_to_featuresFragment"
             app:destination="@id/featuresFragment"
@@ -398,7 +401,7 @@
     <fragment
         android:id="@+id/loginFragment"
         android:name="xyz.zedler.patrick.grocy.fragment.LoginFragment"
-        android:label="LoginFragment" >
+        android:label="LoginFragment">
         <action
             android:id="@+id/action_loginFragment_to_aboutFragment"
             app:destination="@id/aboutFragment"
@@ -454,7 +457,7 @@
     <fragment
         android:id="@+id/settingsFragment"
         android:name="xyz.zedler.patrick.grocy.fragment.SettingsFragment"
-        android:label="SettingsFragment" >
+        android:label="SettingsFragment">
         <action
             android:id="@+id/action_settingsFragment_to_logFragment"
             app:destination="@id/logFragment"

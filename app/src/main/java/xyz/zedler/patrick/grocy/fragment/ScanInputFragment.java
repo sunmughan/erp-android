@@ -45,6 +45,7 @@ import xyz.zedler.patrick.grocy.R;
 import xyz.zedler.patrick.grocy.activity.MainActivity;
 import xyz.zedler.patrick.grocy.databinding.FragmentScanInputBinding;
 import xyz.zedler.patrick.grocy.util.Constants;
+import xyz.zedler.patrick.grocy.util.UnitUtil;
 
 public class ScanInputFragment extends BaseFragment {
 
@@ -142,6 +143,13 @@ public class ScanInputFragment extends BaseFragment {
             }
 
             Bitmap bitmap = toBitmap(mediaImage);
+
+            Rect surfaceRect = new Rect(0, 0, binding.previewView.getWidth(), binding.previewView.getHeight());
+            int horizontalMargin = Math.max(0, (surfaceRect.width() - UnitUtil.getDp(activity, 270)) / 2);
+            int verticalMargin = Math.max(0, (surfaceRect.height() - UnitUtil.getDp(activity, 270)) / 2);
+            surfaceRect.inset(horizontalMargin, verticalMargin);
+
+
 
             InputImage inputImage = InputImage.fromBitmap(
                     bitmap,
