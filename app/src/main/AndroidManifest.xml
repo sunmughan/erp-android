@@ -39,6 +39,8 @@
 
         <activity android:name=".activity.SettingsActivity"/>
 
+        <activity android:name=".barcode.CameraXLivePreviewActivity"/>
+
         <activity android:name=".activity.ShoppingActivity"/>
 
         <activity

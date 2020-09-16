@@ -46,6 +46,7 @@ import xyz.zedler.patrick.grocy.NavGraphDirections;
 import xyz.zedler.patrick.grocy.R;
 import xyz.zedler.patrick.grocy.activity.MainActivity;
 import xyz.zedler.patrick.grocy.activity.ShoppingActivity;
+import xyz.zedler.patrick.grocy.barcode.CameraXLivePreviewActivity;
 import xyz.zedler.patrick.grocy.fragment.ConsumeFragment;
 import xyz.zedler.patrick.grocy.fragment.MasterLocationsFragment;
 import xyz.zedler.patrick.grocy.fragment.MasterProductGroupsFragment;
@@ -168,9 +169,12 @@ public class DrawerBottomSheet extends CustomBottomSheet implements View.OnClick
                 activity.showBottomSheet(new MasterDataBottomSheet(), null);
                 break;
             case R.id.linear_settings:
-                IconUtil.start(view, R.id.image_settings);
+                Intent intent = new Intent(activity, CameraXLivePreviewActivity.class);
+                startActivity(intent);
+
+                /*IconUtil.start(view, R.id.image_settings);
                 new Handler().postDelayed(() -> navigate(DrawerBottomSheetDirections
-                        .actionDrawerBottomSheetDialogFragmentToSettingsActivity(), true), 300);
+                        .actionDrawerBottomSheetDialogFragmentToSettingsActivity(), true), 300);*/
                 break;
             case R.id.linear_feedback:
                 navigate(DrawerBottomSheetDirections
