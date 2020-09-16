@@ -77,6 +77,7 @@ public final class Constants {
         }
         public final static class APPEARANCE {
             public final static String DARK_MODE = "dark_mode";
+            public final static boolean DARK_MODE_DEFAULT = false;
         }
         public final static class SCANNER {
             public final static String FOOD_FACTS = "food_facts";
@@ -111,51 +112,6 @@ public final class Constants {
 
     public final static class DATE {
         public final static String NEVER_EXPIRES = "2999-12-31";
-    }
-
-    public final static class MessageType {
-        public final static int NORMAL = 0;
-        public final static int DOWNLOAD_ERROR_REFRESH = 1;
-        public final static int PURCHASE_FINISHED = 2;
-    }
-
-    public final static class UI {
-        public final static String STOCK = "stock";
-        public final static String STOCK_DEFAULT = "stock_default";
-        public final static String STOCK_SEARCH	= "stock_search";
-        public final static String SHOPPING_LIST = "shopping_list";
-        public final static String SHOPPING_LIST_EDIT = "shopping_list_edit";
-        public final static String SHOPPING_LIST_DEFAULT = "shopping_list_default";
-        public final static String SHOPPING_LIST_SEARCH = "shopping_list_search";
-        public final static String SHOPPING_LIST_OFFLINE_DEFAULT = "shopping_list_offline";
-        public final static String SHOPPING_LIST_OFFLINE_SEARCH = "shopping_list_offline_search";
-        public final static String SHOPPING_LIST_ITEM_EDIT = "shopping_list_item_edit";
-        public final static String CONSUME = "consume";
-        public final static String PURCHASE = "purchase";
-        public final static String MASTER = "master";
-        public final static String MASTER_PRODUCTS = "master_products";
-        public final static String MASTER_PRODUCTS_DEFAULT = "master_products_default";
-        public final static String MASTER_PRODUCTS_SEARCH = "master_products_search";
-        public final static String MASTER_PRODUCT_EXTENDED = "master_product_extended";
-        public final static String MASTER_PRODUCT_SIMPLE = "master_product_simple";
-        public final static String MASTER_LOCATIONS = "master_locations";
-        public final static String MASTER_LOCATIONS_DEFAULT = "master_locations_default";
-        public final static String MASTER_LOCATIONS_SEARCH = "master_locations_search";
-        public final static String MASTER_LOCATION = "master_location";
-        public final static String MASTER_STORES = "master_stores";
-        public final static String MASTER_STORES_DEFAULT = "master_stores_default";
-        public final static String MASTER_STORES_SEARCH = "master_stores_search";
-        public final static String MASTER_STORE = "master_store";
-        public final static String MASTER_QUANTITY_UNITS = "master_quantity_units";
-        public final static String MASTER_QUANTITY_UNITS_DEFAULT = "master_quantity_units_default";
-        public final static String MASTER_QUANTITY_UNITS_SEARCH = "master_quantity_units_search";
-        public final static String MASTER_QUANTITY_UNIT = "master_quantity_unit";
-        public final static String MASTER_PRODUCT_GROUPS = "master_product_groups";
-        public final static String MASTER_PRODUCT_GROUPS_DEFAULT = "master_product_groups_default";
-        public final static String MASTER_PRODUCT_GROUPS_SEARCH = "master_product_groups_search";
-        public final static String MASTER_PRODUCT_GROUP = "master_product_group";
-        public final static String BATCH_SCAN = "batch_scan";
-        public final static String MISSING_BATCH_ITEMS = "missing_batch_products";
     }
 
     public final static class STOCK {
@@ -196,7 +152,6 @@ public final class Constants {
 
     public final static class EXTRA {
         public final static String SCAN_RESULT = "scan_result";
-        public final static String AFTER_FEATURES_ACTIVITY = "after_features_activity";
     }
 
     public final static class ACTION {
@@ -208,19 +163,11 @@ public final class Constants {
         public final static String CREATE = "action_create";
         public final static String EDIT = "action_edit";
         public final static String LINK = "action_link";
-        public final static String CREATE_FROM_STOCK = "action_create_from_stock";
         public final static String CREATE_THEN_PURCHASE = "create_then_purchase";
         public final static String CREATE_THEN_PURCHASE_BATCH = "create_then_purchase_batch";
         public final static String CREATE_THEN_SHOPPING_LIST_ITEM_EDIT = "create_then_shopping_list_item_edit";
-        public final static String EDIT_THEN_PURCHASE = "edit_then_purchase";
         public final static String EDIT_THEN_PURCHASE_BATCH = "edit_then_purchase_batch";
-        public final static String EDIT_THEN_CONSUME = "edit_then_consume";
-        public final static String EDIT_THEN_SHOPPING_LIST_ITEM_EDIT = "edit_then_shopping_list_item_edit";
         public final static String DELETE_THEN_PURCHASE_BATCH = "delete_then_purchase_batch";
-        public final static String PURCHASE_THEN_SHOPPING_LIST = "purchase_then_shopping_list";
-        public final static String PURCHASE_MULTI_THEN_SHOPPING_LIST = "purchase_multi_then_shopping_list"; // purchase multi shopping list items
-        public final static String PURCHASE_THEN_STOCK = "purchase_then_stock";
-        public final static String CONSUME_THEN_STOCK = "consume_then_stock";
     }
 
     public final static class SHORTCUT_ACTION {
@@ -232,7 +179,6 @@ public final class Constants {
     }
 
     public final static class ARGUMENT {
-        public final static String UI_MODE = "ui_mode";
         public final static String OPTION = "option";
         public final static String ANIMATED = "animated";
         public final static String STOCK_ITEM = "stock_item";
